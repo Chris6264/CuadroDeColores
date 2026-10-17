@@ -4,16 +4,25 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 public class Tablero {
-    private Ficha[][] tablero;
+    private final Ficha[][] tablero;
+    private final Reglas reglas;
     private Ficha[] coloresActivos;
-    private int numeroFilas;
-    private int numeroColumnas;
-    private Random random;
+    private final int numeroDeLados;
+    private final Random random;
 
-    public Tablero(int numeroFilas, int numeroColumnas) {
-        this.numeroFilas = numeroFilas;
-        this.numeroColumnas = numeroColumnas;
-        this.tablero = new Ficha[numeroFilas][numeroColumnas];
+    public Tablero(Reglas reglas) {
+        this.reglas = reglas;
+        this.numeroDeLados = 2;
+        this.random = new Random();
+        this.tablero = new Ficha[numeroDeLados][numeroDeLados];
+        llenarTablero();
+    }
+
+    public Tablero(int numeroDeLados, Reglas reglas) {
+        this.reglas = reglas;
+        reglas.validarCampos(numeroDeLados);
+        this.numeroDeLados = numeroDeLados;
+        this.tablero = new Ficha[numeroDeLados][numeroDeLados];
         this.random = new Random();
         llenarTablero();
     }
@@ -21,8 +30,8 @@ public class Tablero {
     private void llenarTablero(){
         int numeroDeColores = 2;
         escogerColores(numeroDeColores);
-        for (int i = 0; i < numeroFilas; i++){
-            for (int j = 0; j < numeroColumnas; j++){
+        for (int i = 0; i < numeroDeLados; i++){
+            for (int j = 0; j < numeroDeLados; j++){
                 int posicionColor = random.nextInt(coloresActivos.length);
                 this.tablero[i][j] = coloresActivos[posicionColor];
             }
@@ -44,17 +53,17 @@ public class Tablero {
     @Override
     public String toString() {
         StringBuilder stringBuilder = new StringBuilder();
-        String separador = "   +" + "---+".repeat(numeroColumnas) + "\n";
+        String separador = "   +" + "---+".repeat(numeroDeLados) + "\n";
 
         stringBuilder.append("    ");
-        for (int j = 0; j < numeroColumnas; j++) {
+        for (int j = 0; j < numeroDeLados; j++) {
             stringBuilder.append(String.format(" %-3d", j));
         }
         stringBuilder.append("\n").append(separador);
 
-        for (int i = 0; i < numeroFilas; i++) {
+        for (int i = 0; i < numeroDeLados; i++) {
             stringBuilder.append(String.format("%2d |", i));
-            for (int j = 0; j < numeroColumnas; j++) {
+            for (int j = 0; j < numeroDeLados; j++) {
                 stringBuilder.append(" ").append(tablero[i][j].getSimbolo()).append(" |");
             }
             stringBuilder.append("\n").append(separador);

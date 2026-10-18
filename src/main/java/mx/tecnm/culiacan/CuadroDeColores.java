@@ -17,14 +17,17 @@ public class CuadroDeColores {
     }
 
     private Tablero crearTablero() {
-        if (version == Version.BASICA) return new Tablero(reglas);
-        while (true) {
+        Tablero tablero;
+        if (version == Version.BASICA) tablero = new Tablero(reglas);
+        else while (true) {
             try {
                 int numeroDeLados = vista.pedirNumeroDeLados();
-                return new Tablero(numeroDeLados, reglas);
+                tablero = new Tablero(numeroDeLados, reglas);
+                break;
             } catch (ReglasException e) {
                 vista.mostrarError(e.getMessage());
             }
         }
+        return tablero;
     }
 }

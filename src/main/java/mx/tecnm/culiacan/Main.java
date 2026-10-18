@@ -1,7 +1,7 @@
 package mx.tecnm.culiacan;
 public class Main {
     public static void main(String[] args) {
-        Version version = Version.AVANZADA;
+        Version version = Version.BASICA;
         Reglas reglas = version.crearReglas();
 
         Vista vista = new Vista();

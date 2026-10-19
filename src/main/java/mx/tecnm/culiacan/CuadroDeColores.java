@@ -1,5 +1,8 @@
 package mx.tecnm.culiacan;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class CuadroDeColores {
     private final Version version;
     private final Reglas reglas;
@@ -12,8 +15,28 @@ public class CuadroDeColores {
     }
 
     public void iniciar(){
-        Tablero tablero = crearTablero();
+        Tablero tablero;
+        List<Paso> solucion;
+
+        do {
+            tablero = crearTablero();
+            solucion = new SolucionadorTablero(tablero.getSalidas(), tablero.getNumeroDeLados())
+                    .resolverTablero(tablero.getEstadoInicial());
+        } while (solucion == null);
+
         vista.mostrarTablero(tablero);
+        vista.mostrarCantidadMovimientos(solucion.size());
+
+        List<String> historialDeMovimientos = new ArrayList<>();
+        int numeroDePaso = 1;
+        for (Paso paso : solucion) {
+            tablero.realizarMovimiento(paso);
+            String movimiento = numeroDePaso++ + ") " + paso;
+            historialDeMovimientos.add(movimiento);
+            vista.mostrarMovimiento(movimiento);
+            vista.mostrarTablero(tablero);
+        }
+        vista.mostrarHistorialMovimientos(historialDeMovimientos);
     }
 
     private Tablero crearTablero() {

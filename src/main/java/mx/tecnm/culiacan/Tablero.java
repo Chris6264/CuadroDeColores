@@ -9,6 +9,8 @@ public class Tablero {
 
     private final Ficha[][] tablero;
     private Ficha[] coloresActivos;
+    private final Estado estadoInicial;
+    private Estado estadoActual;
     private final Reglas reglas;
     private final int numeroDeColores;
     private final int numeroDeLados;
@@ -22,6 +24,8 @@ public class Tablero {
         this.numeroDeColores = 2;
         this.tablero = new Ficha[numeroDeLados][numeroDeLados];
         llenarTablero();
+        this.estadoInicial = new Estado(tablero);
+        this.estadoActual = estadoInicial;
     }
 
     public Tablero(int numeroDeLados, Reglas reglas) {
@@ -32,6 +36,20 @@ public class Tablero {
         this.random = new Random();
         this.numeroDeColores = MINIMO_COLORES + random.nextInt(MAXIMO_COLORES - MINIMO_COLORES + 1);
         llenarTablero();
+        this.estadoInicial = new Estado(tablero);
+        this.estadoActual = estadoInicial;
+    }
+
+    public int getNumeroDeLados() { return numeroDeLados; }
+
+    public List<Salida> getSalidas() { return salidas; }
+
+    public Estado getEstadoInicial() { return estadoInicial; }
+
+    public Estado getEstadoActual() { return estadoActual; }
+
+    public void realizarMovimiento(Paso paso) {
+        estadoActual = estadoActual.realizarMovimiento(paso);
     }
 
     private void llenarTablero(){
@@ -59,7 +77,7 @@ public class Tablero {
                 .filter(ficha -> ficha != Ficha.VACIA)
                 .collect(Collectors.toList());
 
-        Collections.shuffle(coloresCandidatos,random);
+        Collections.shuffle(coloresCandidatos, random);
 
         coloresActivos = coloresCandidatos.stream()
                 .limit(numeroDeColores)
@@ -77,12 +95,12 @@ public class Tablero {
         List<int[]> espacios = new ArrayList<>();
         for (LadoSalida lado : LadoSalida.values())
             for (int i = 0; i < numeroDeLados; i++)
-                espacios.add(new int[]{lado.ordinal(),i});
-        Collections.shuffle(espacios,random);
+                espacios.add(new int[]{lado.ordinal(), i});
+        Collections.shuffle(espacios, random);
 
         for (int j = 0; j < coloresActivos.length; j++){
             int[] espacio = espacios.get(j);
-            salidas.add(new Salida(LadoSalida.values()[espacio[0]],espacio[1],coloresActivos[j]));
+            salidas.add(new Salida(LadoSalida.values()[espacio[0]], espacio[1], coloresActivos[j]));
         }
 
         boolean hayCoincidencia = salidas.stream().anyMatch(salida -> tablero[salida.getFila(numeroDeLados)]
@@ -124,7 +142,7 @@ public class Tablero {
         for (int i = 0; i < numeroDeLados; i++) {
             sb.append(simboloSalida(LadoSalida.IZQUIERDA, i)).append(" |");
             for (int j = 0; j < numeroDeLados; j++)
-                sb.append(" ").append(tablero[i][j].getSimbolo()).append(" |");
+                sb.append(" ").append(estadoActual.get(i, j).getSimbolo()).append(" |");
             sb.append(" ").append(simboloSalida(LadoSalida.DERECHA, i)).append("\n").append(separador);
         }
 

@@ -17,4 +17,13 @@ public enum Movimiento {
     public int getMovimientoFila() { return movimientoFila; }
 
     public int getMovimientoColumna() { return movimientoColumna; }
+
+    public LadoSalida getLadoSalida() {
+        switch (this) {
+            case ARRIBA: return LadoSalida.ARRIBA;
+            case ABAJO: return LadoSalida.ABAJO;
+            case IZQUIERDA: return LadoSalida.IZQUIERDA;
+            default: return LadoSalida.DERECHA;
+        }
+    }
 }

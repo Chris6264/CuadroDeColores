@@ -1,3 +1,4 @@
+
 package mx.tecnm.culiacan;
 
 import java.util.*;
@@ -9,6 +10,7 @@ public class SolucionadorTablero {
     private final int numeroColumnas;
     private final double peso;
     private final int maximoNodos;
+    private final int maximoEstados;
 
     private int nodosExplorados;
     private int nodosGenerados;
@@ -23,8 +25,12 @@ public class SolucionadorTablero {
         this.piezas = piezas;
         this.numeroFilas = numeroFilas;
         this.numeroColumnas = numeroColumnas;
-        this.peso = numeroFilas * numeroColumnas <= 25 ? 1.0 : 1.5;
-        this.maximoNodos = numeroFilas * numeroColumnas <= 25 ? 100000 : 300000;
+
+        int casillas = numeroFilas * numeroColumnas;
+
+        this.peso = casillas <= 25 ? 1.0 : 1.5;
+        this.maximoNodos = casillas <= 25 ? 100000 : casillas <= 49 ? 150000 : 300000;
+        this.maximoEstados = casillas <= 25 ? 150000 : casillas <= 49 ? 200000 : 500000;
     }
 
     public double getPeso() { return peso; }
@@ -72,22 +78,27 @@ public class SolucionadorTablero {
             for (Paso paso : sucesores(estado)) {
                 Estado siguiente = estado.realizarMovimiento(paso);
                 int costo = actual.getCostoAcumulado() + 1;
-                Integer previo = mejorCosto.get(siguiente.getClave());
+                Integer anterior = mejorCosto.get(siguiente.getClave());
 
-                if (previo == null || costo < previo) {
-                    mejorCosto.put(siguiente.getClave(), costo);
+                if (anterior != null && costo >= anterior) continue;
 
-                    abiertos.add(new Nodo(
-                            siguiente,
-                            actual,
-                            paso,
-                            costo,
-                            heuristica(siguiente),
-                            peso
-                    ));
-
-                    nodosGenerados++;
+                if (anterior == null && mejorCosto.size() >= maximoEstados) {
+                    resultadoBusqueda = ResultadoBusqueda.LIMITE_ALCANZADO;
+                    return null;
                 }
+
+                mejorCosto.put(siguiente.getClave(), costo);
+
+                abiertos.add(new Nodo(
+                        siguiente,
+                        actual,
+                        paso,
+                        costo,
+                        heuristica(siguiente),
+                        peso
+                ));
+
+                nodosGenerados++;
             }
         }
 
@@ -151,23 +162,33 @@ public class SolucionadorTablero {
 
         if (pieza.getTamano() >= 3 && cara.length != 2) return false;
 
-        int extremo = lado == LadoSalida.ARRIBA || lado == LadoSalida.IZQUIERDA
-                ? Integer.MAX_VALUE : Integer.MIN_VALUE;
+        int extremo = Integer.MIN_VALUE;
+        int minimo = Integer.MAX_VALUE;
+        int maximo = Integer.MIN_VALUE;
 
-        int[] posiciones = new int[cara.length];
-
-        for (int i = 0; i < cara.length; i++) {
-            int parte = cara[i];
+        for (int parte : cara) {
             int f = fila + pieza.getDesplazamientoFila(parte);
             int c = columna + pieza.getDesplazamientoColumna(parte);
 
-            int coordenada = lado == LadoSalida.ARRIBA || lado == LadoSalida.ABAJO ? f : c;
+            int posicion = lado == LadoSalida.ARRIBA || lado == LadoSalida.ABAJO ? c : f;
 
-            if (lado == LadoSalida.ARRIBA || lado == LadoSalida.IZQUIERDA)
-                extremo = Math.min(extremo, coordenada);
-            else extremo = Math.max(extremo, coordenada);
+            minimo = Math.min(minimo, posicion);
+            maximo = Math.max(maximo, posicion);
 
-            posiciones[i] = lado == LadoSalida.ARRIBA || lado == LadoSalida.ABAJO ? c : f;
+            switch (lado) {
+                case ARRIBA:
+                    extremo = f;
+                    break;
+                case ABAJO:
+                    extremo = f;
+                    break;
+                case IZQUIERDA:
+                    extremo = c;
+                    break;
+                case DERECHA:
+                    extremo = c;
+                    break;
+            }
         }
 
         boolean tocaBorde;
@@ -181,24 +202,19 @@ public class SolucionadorTablero {
 
         if (!tocaBorde) return false;
 
-        Arrays.sort(posiciones);
-
         for (Salida salida : salidas) {
             if (salida.getColorFicha() != pieza.getColor()) continue;
             if (salida.getLadoSalida() != lado) continue;
             if (salida.getTamano() != tamanoSalida) continue;
 
-            if (pieza.getTamano() >= 3) {
-                if (posiciones[1] != posiciones[0] + 1) continue;
+            if (tamanoSalida == 2) {
+                if (maximo != minimo + 1) continue;
 
-                if (posiciones[0] == salida.getIndice()
-                        && posiciones[1] == salida.getIndice() + 1)
+                if (minimo == salida.getIndice()
+                        && maximo == salida.getIndice() + 1)
                     return true;
-            } else {
-                int indice = lado == LadoSalida.ARRIBA || lado == LadoSalida.ABAJO
-                        ? columna : fila;
-
-                if (indice == salida.getIndice()) return true;
+            } else if (minimo == salida.getIndice()) {
+                return true;
             }
         }
 
@@ -216,13 +232,15 @@ public class SolucionadorTablero {
             int tamanoSalida = pieza.getTamano() >= 3 ? 2 : 1;
 
             for (Salida salida : salidas) {
+                LadoSalida lado = salida.getLadoSalida();
+
                 if (salida.getColorFicha() != pieza.getColor()) continue;
                 if (salida.getTamano() != tamanoSalida) continue;
-                if (!pieza.permiteSalida(salida.getLadoSalida())) continue;
+                if (!pieza.permiteSalida(lado)) continue;
 
-                int[] cara = pieza.getForma().getIndicesCara(salida.getLadoSalida());
+                int[] cara = pieza.getForma().getIndicesCara(lado);
 
-                if (cara.length != tamanoSalida) continue;
+                if (tamanoSalida == 2 && cara.length != 2) continue;
 
                 int minimo = Integer.MAX_VALUE;
                 int extremo = 0;
@@ -231,13 +249,11 @@ public class SolucionadorTablero {
                     int f = origen[0] + pieza.getDesplazamientoFila(parte);
                     int c = origen[1] + pieza.getDesplazamientoColumna(parte);
 
-                    int posicion = salida.getLadoSalida() == LadoSalida.ARRIBA
-                            || salida.getLadoSalida() == LadoSalida.ABAJO ? c : f;
-
+                    int posicion = lado == LadoSalida.ARRIBA || lado == LadoSalida.ABAJO ? c : f;
                     minimo = Math.min(minimo, posicion);
                 }
 
-                switch (salida.getLadoSalida()) {
+                switch (lado) {
                     case ARRIBA:
                         extremo = Integer.MAX_VALUE;
                         for (int parte : cara)
@@ -257,20 +273,19 @@ public class SolucionadorTablero {
                         extremo = Integer.MIN_VALUE;
                         for (int parte : cara)
                             extremo = Math.max(extremo, origen[1] + pieza.getDesplazamientoColumna(parte));
-                        break;
                 }
 
                 int distanciaBorde;
 
-                switch (salida.getLadoSalida()) {
+                switch (lado) {
                     case ARRIBA: distanciaBorde = extremo; break;
                     case ABAJO: distanciaBorde = numeroFilas - 1 - extremo; break;
                     case IZQUIERDA: distanciaBorde = extremo; break;
                     default: distanciaBorde = numeroColumnas - 1 - extremo;
                 }
 
-                int distanciaLateral = Math.abs(minimo - salida.getIndice());
-                int distancia = distanciaBorde + distanciaLateral + 1;
+                int distancia = distanciaBorde
+                        + Math.abs(minimo - salida.getIndice()) + 1;
 
                 mejor = Math.min(mejor, distancia);
             }

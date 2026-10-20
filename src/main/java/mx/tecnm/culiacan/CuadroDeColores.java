@@ -29,7 +29,7 @@ public class CuadroDeColores {
         TableroJuego tablero = null;
         List<Paso> solucion = null;
 
-        int maximoIntentos = version == Version.AVANZADA ? 5 : 30;
+        int maximoIntentos = version == Version.AVANZADA ? 100 : 30;
         int sinSolucion = 0;
         int limiteAlcanzado = 0;
         int erroresGeneracion = 0;
@@ -69,11 +69,16 @@ public class CuadroDeColores {
                     limiteAlcanzado++;
 
             } catch (IllegalStateException e) {
-                erroresGeneracion++;
-                solucion = null;
+            erroresGeneracion++;
+            solucion = null;
+            System.out.println("\nIntento " + intento + ": " + e.getMessage());
 
-                System.out.println("\nIntento " + intento + ": " + e.getMessage());
-            }
+        } catch (IndexOutOfBoundsException e) {
+            erroresGeneracion++;
+            solucion = null;
+            System.out.println("\nError de indices en intento " + intento);
+            e.printStackTrace();
+        }
         }
 
         if (solucion == null) {

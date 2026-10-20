@@ -18,6 +18,10 @@ public class Estado {
 
     public int getTamano() { return celdas.length; }
 
+    public int getNumeroFilas() { return celdas.length; }
+
+    public int getNumeroColumnas() { return celdas[0].length; }
+
     public int get(int fila, int columna) {
         return celdas[fila][columna];
     }
@@ -32,10 +36,21 @@ public class Estado {
     }
 
     public int[] buscarOrigen(int id) {
-        for (int i = 0; i < celdas.length; i++)
-            for (int j = 0; j < celdas[i].length; j++)
-                if (celdas[i][j] == id) return new int[]{i, j};
-        return null;
+        int minimoFila = Integer.MAX_VALUE;
+        int minimoColumna = Integer.MAX_VALUE;
+
+        for (int fila = 0; fila < getNumeroFilas(); fila++) {
+            for (int columna = 0; columna < getNumeroColumnas(); columna++) {
+                if (celdas[fila][columna] != id) continue;
+
+                minimoFila = Math.min(minimoFila, fila);
+                minimoColumna = Math.min(minimoColumna, columna);
+            }
+        }
+
+        if (minimoFila == Integer.MAX_VALUE) return null;
+
+        return new int[]{minimoFila, minimoColumna};
     }
 
     public Estado realizarMovimiento(Paso paso) {
@@ -45,23 +60,23 @@ public class Estado {
             copia[i] = celdas[i].clone();
 
         Pieza pieza = paso.getPieza();
-        int f = paso.getFila();
-        int c = paso.getColumna();
+        int fila = paso.getFila();
+        int columna = paso.getColumna();
 
         for (int parte = 0; parte < pieza.getTamano(); parte++) {
-            int fila = f + pieza.getDesplazamientoFila(parte);
-            int columna = c + pieza.getDesplazamientoColumna(parte);
-            copia[fila][columna] = 0;
+            int f = fila + pieza.getDesplazamientoFila(parte);
+            int c = columna + pieza.getDesplazamientoColumna(parte);
+            copia[f][c] = 0;
         }
 
         if (!paso.fichaSale()) {
-            int nf = f + paso.getMovimiento().getMovimientoFila();
-            int nc = c + paso.getMovimiento().getMovimientoColumna();
+            int nf = fila + paso.getMovimiento().getMovimientoFila();
+            int nc = columna + paso.getMovimiento().getMovimientoColumna();
 
             for (int parte = 0; parte < pieza.getTamano(); parte++) {
-                int fila = nf + pieza.getDesplazamientoFila(parte);
-                int columna = nc + pieza.getDesplazamientoColumna(parte);
-                copia[fila][columna] = pieza.getId();
+                int f = nf + pieza.getDesplazamientoFila(parte);
+                int c = nc + pieza.getDesplazamientoColumna(parte);
+                copia[f][c] = pieza.getId();
             }
         }
 

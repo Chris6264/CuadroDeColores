@@ -15,41 +15,79 @@ public class CuadroDeColores {
     }
 
     public void iniciar() {
-        Tablero tablero = null;
+        int filas = 2;
+        int columnas = 2;
+
+        if (version == Version.INTERMEDIA) {
+            filas = pedirDimension();
+            columnas = filas;
+        } else if (version == Version.AVANZADA) {
+            filas = pedirFilas();
+            columnas = pedirColumnas();
+        }
+
+        TableroJuego tablero = null;
         List<Paso> solucion = null;
 
-        int numeroDeLados = version == Version.BASICA ? 2 : pedirNumeroDeLados();
-        int intentos = 0;
-        int maximoIntentos = 30;
+        int maximoIntentos = version == Version.AVANZADA ? 5 : 30;
+        int sinSolucion = 0;
+        int limiteAlcanzado = 0;
+        int erroresGeneracion = 0;
 
-        while (solucion == null && intentos < maximoIntentos) {
-            intentos++;
-
+        for (int intento = 1; intento <= maximoIntentos && solucion == null; intento++) {
             try {
-                tablero = version == Version.BASICA
-                        ? new Tablero(reglas)
-                        : new Tablero(numeroDeLados, reglas);
+                if (version == Version.BASICA)
+                    tablero = new Tablero(reglas);
+                else if (version == Version.INTERMEDIA)
+                    tablero = new Tablero(filas, reglas);
+                else
+                    tablero = new TableroAvanzado(filas, columnas, reglas);
 
                 SolucionadorTablero solucionador = new SolucionadorTablero(
                         tablero.getSalidas(),
-                        tablero.getNumeroDeLados(),
+                        tablero.getNumeroFilas(),
+                        tablero.getNumeroColumnas(),
                         tablero.getPiezas()
                 );
 
+                long inicio = System.nanoTime();
+
                 solucion = solucionador.resolverTablero(tablero.getEstadoInicial());
 
+                double tiempo = (System.nanoTime() - inicio) / 1_000_000_000.0;
+
+                System.out.println("\nIntento " + intento);
+                System.out.println("Resultado: " + solucionador.getResultadoBusqueda());
+                System.out.println("Nodos explorados: " + solucionador.getNodosExplorados());
+                System.out.println("Nodos generados: " + solucionador.getNodosGenerados());
+                System.out.printf("Tiempo: %.3f segundos%n", tiempo);
+
+                if (solucionador.getResultadoBusqueda() == ResultadoBusqueda.SIN_SOLUCION)
+                    sinSolucion++;
+
+                if (solucionador.getResultadoBusqueda() == ResultadoBusqueda.LIMITE_ALCANZADO)
+                    limiteAlcanzado++;
+
             } catch (IllegalStateException e) {
+                erroresGeneracion++;
                 solucion = null;
+
+                System.out.println("\nIntento " + intento + ": " + e.getMessage());
             }
         }
 
-        if (solucion == null)
-            throw new IllegalStateException("No se encontró una solución después de " + maximoIntentos + " intentos");
+        if (solucion == null) {
+            System.out.println("\nNo se encontró una solución.");
+            System.out.println("Tableros sin solución comprobada: " + sinSolucion);
+            System.out.println("Búsquedas detenidas por límite: " + limiteAlcanzado);
+            System.out.println("Errores de generación o validación: " + erroresGeneracion);
+            return;
+        }
 
         vista.mostrarTablero(tablero);
 
         System.out.println("Algoritmo utilizado: "
-                + (numeroDeLados <= 5 ? "A*" : "A* ponderado"));
+                + (filas * columnas <= 25 ? "A*" : "A* ponderado"));
 
         vista.mostrarCantidadMovimientos(solucion.size());
 
@@ -69,12 +107,36 @@ public class CuadroDeColores {
         vista.mostrarHistorialMovimientos(historialDeMovimientos);
     }
 
-    private int pedirNumeroDeLados() {
+    private int pedirDimension() {
         while (true) {
             try {
-                int numeroDeLados = vista.pedirNumeroDeLados();
-                reglas.validarCampos(numeroDeLados);
-                return numeroDeLados;
+                int numero = vista.pedirNumeroDeLados();
+                reglas.validarCampos(numero);
+                return numero;
+            } catch (ReglasException e) {
+                vista.mostrarError(e.getMessage());
+            }
+        }
+    }
+
+    private int pedirFilas() {
+        while (true) {
+            try {
+                int numero = vista.pedirNumeroFilas();
+                reglas.validarCampos(numero);
+                return numero;
+            } catch (ReglasException e) {
+                vista.mostrarError(e.getMessage());
+            }
+        }
+    }
+
+    private int pedirColumnas() {
+        while (true) {
+            try {
+                int numero = vista.pedirNumeroColumnas();
+                reglas.validarCampos(numero);
+                return numero;
             } catch (ReglasException e) {
                 vista.mostrarError(e.getMessage());
             }

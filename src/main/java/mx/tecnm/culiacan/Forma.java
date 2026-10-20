@@ -1,4 +1,3 @@
-
 package mx.tecnm.culiacan;
 
 import java.util.ArrayList;
@@ -12,6 +11,10 @@ public enum Forma {
     L2(new int[][]{{0, 0}, {0, 1}, {1, 0}}),
     L3(new int[][]{{0, 0}, {0, 1}, {1, 1}}),
     L4(new int[][]{{0, 1}, {1, 0}, {1, 1}}),
+    LARGA1(new int[][]{{0, 0}, {1, 0}, {2, 0}, {2, 1}}),
+    LARGA2(new int[][]{{0, 0}, {0, 1}, {0, 2}, {1, 0}}),
+    LARGA3(new int[][]{{0, 0}, {0, 1}, {1, 1}, {2, 1}}),
+    LARGA4(new int[][]{{0, 2}, {1, 0}, {1, 1}, {1, 2}}),
     CUADRADO(new int[][]{{0, 0}, {0, 1}, {1, 0}, {1, 1}});
 
     private final int[][] posiciones;
@@ -32,7 +35,27 @@ public enum Forma {
     public int getColumna(int parte) { return posiciones[parte][1]; }
 
     public boolean esL() {
+        return esLCorta() || esLLarga();
+    }
+
+    public boolean esLCorta() {
         return this == L1 || this == L2 || this == L3 || this == L4;
+    }
+
+    public boolean esLLarga() {
+        return this == LARGA1 || this == LARGA2 || this == LARGA3 || this == LARGA4;
+    }
+
+    public static Forma[] getLsCortas() {
+        return new Forma[]{L1, L2, L3, L4};
+    }
+
+    public static Forma[] getLsLargas() {
+        return new Forma[]{LARGA1, LARGA2, LARGA3, LARGA4};
+    }
+
+    public int getTamanoSalida(LadoSalida lado) {
+        return caras[lado.ordinal()].length;
     }
 
     private int[] calcularIndicesCara(LadoSalida lado) {

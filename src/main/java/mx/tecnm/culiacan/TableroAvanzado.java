@@ -68,12 +68,13 @@ public class TableroAvanzado implements TableroJuego {
     private void llenarTablero() {
         List<Forma> formas = new ArrayList<>();
 
-        Forma[] formasL = {Forma.L1, Forma.L2, Forma.L3, Forma.L4};
-        Forma formaL = formasL[random.nextInt(formasL.length)];
+        Forma formaLCorta = elegirAleatoria(Forma.getLsCortas());
+        Forma formaLLarga = elegirAleatoria(Forma.getLsLargas());
 
         colocarFormaEn(0, 0, Forma.INDIVIDUAL, formas);
         colocarFormaAleatoria(Forma.CUADRADO, formas);
-        colocarFormaAleatoria(formaL, formas);
+        colocarFormaAleatoria(formaLLarga, formas);
+        colocarFormaAleatoria(formaLCorta, formas);
         colocarFormaAleatoria(Forma.HORIZONTAL, formas);
         colocarFormaAleatoria(Forma.VERTICAL, formas);
 
@@ -87,7 +88,8 @@ public class TableroAvanzado implements TableroJuego {
 
         Forma[] candidatas = {
                 Forma.CUADRADO,
-                formaL,
+                formaLCorta,
+                formaLLarga,
                 Forma.HORIZONTAL,
                 Forma.VERTICAL,
                 Forma.INDIVIDUAL
@@ -118,6 +120,10 @@ public class TableroAvanzado implements TableroJuego {
         asignarColores(formas);
         colocarSalidas();
         validarTablero();
+    }
+
+    private Forma elegirAleatoria(Forma[] opciones) {
+        return opciones[random.nextInt(opciones.length)];
     }
 
     private boolean puedeColocar(int fila, int columna, Forma forma) {
@@ -169,7 +175,8 @@ public class TableroAvanzado implements TableroJuego {
         if (forma == Forma.INDIVIDUAL) return 0;
         if (forma == Forma.HORIZONTAL) return 1;
         if (forma == Forma.VERTICAL) return 2;
-        if (forma.esL()) return 3;
+        if (forma.esLCorta()) return 3;
+        if (forma.esLLarga()) return 5;
         return 4;
     }
 
@@ -333,12 +340,13 @@ public class TableroAvanzado implements TableroJuego {
             List<Pieza> grupo = entry.getValue();
             Pieza representante = grupo.get(0);
 
-            int tamanoSalida = representante.getTamano() >= 3 ? 2 : 1;
             List<Salida> candidatas = new ArrayList<>();
             List<Salida> alineadas = new ArrayList<>();
 
             for (LadoSalida lado : LadoSalida.values()) {
                 if (!representante.permiteSalida(lado)) continue;
+
+                int tamanoSalida = representante.getForma().getTamanoSalida(lado);
 
                 int limite = lado == LadoSalida.ARRIBA || lado == LadoSalida.ABAJO
                         ? numeroColumnas : numeroFilas;

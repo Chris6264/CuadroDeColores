@@ -5,42 +5,93 @@ import java.util.*;
 public class SolucionadorTablero {
     private final List<Salida> salidas;
     private final List<Pieza> piezas;
-    private final int numeroDeLados;
+    private final int numeroFilas;
+    private final int numeroColumnas;
     private final double peso;
+    private final int maximoNodos;
+
+    private int nodosExplorados;
+    private int nodosGenerados;
+    private ResultadoBusqueda resultadoBusqueda;
 
     public SolucionadorTablero(List<Salida> salidas, int numeroDeLados, List<Pieza> piezas) {
-        this.salidas = salidas;
-        this.numeroDeLados = numeroDeLados;
-        this.piezas = piezas;
-        this.peso = numeroDeLados <= 5 ? 1.0 : 1.5;
+        this(salidas, numeroDeLados, numeroDeLados, piezas);
     }
 
+    public SolucionadorTablero(List<Salida> salidas, int numeroFilas, int numeroColumnas, List<Pieza> piezas) {
+        this.salidas = salidas;
+        this.piezas = piezas;
+        this.numeroFilas = numeroFilas;
+        this.numeroColumnas = numeroColumnas;
+        this.peso = numeroFilas * numeroColumnas <= 25 ? 1.0 : 1.5;
+        this.maximoNodos = numeroFilas * numeroColumnas <= 25 ? 100000 : 300000;
+    }
+
+    public double getPeso() { return peso; }
+
+    public int getNodosExplorados() { return nodosExplorados; }
+
+    public int getNodosGenerados() { return nodosGenerados; }
+
+    public ResultadoBusqueda getResultadoBusqueda() { return resultadoBusqueda; }
+
     public List<Paso> resolverTablero(Estado inicial) {
-        PriorityQueue<Nodo> abiertos = new PriorityQueue<>(Comparator.comparingDouble(Nodo::getCostoTotal));
+        PriorityQueue<Nodo> abiertos = new PriorityQueue<>(
+                Comparator.comparingDouble(Nodo::getCostoTotal)
+                        .thenComparingInt(Nodo::getCostoAcumulado)
+        );
+
         Map<String, Integer> mejorCosto = new HashMap<>();
+
+        nodosExplorados = 0;
+        nodosGenerados = 1;
+        resultadoBusqueda = null;
 
         abiertos.add(new Nodo(inicial, null, null, 0, heuristica(inicial), peso));
         mejorCosto.put(inicial.getClave(), 0);
 
         while (!abiertos.isEmpty()) {
             Nodo actual = abiertos.poll();
-            Estado estadoActual = actual.getEstado();
+            Estado estado = actual.getEstado();
 
-            if (actual.getCostoAcumulado() > mejorCosto.getOrDefault(estadoActual.getClave(), Integer.MAX_VALUE)) continue;
-            if (estadoActual.estaResuelto()) return actual.reconstruirCamino();
+            if (actual.getCostoAcumulado() >
+                    mejorCosto.getOrDefault(estado.getClave(), Integer.MAX_VALUE)) continue;
 
-            for (Paso paso : sucesores(estadoActual)) {
-                Estado siguiente = estadoActual.realizarMovimiento(paso);
+            if (estado.estaResuelto()) {
+                resultadoBusqueda = ResultadoBusqueda.SOLUCION_ENCONTRADA;
+                return actual.reconstruirCamino();
+            }
+
+            if (nodosExplorados >= maximoNodos) {
+                resultadoBusqueda = ResultadoBusqueda.LIMITE_ALCANZADO;
+                return null;
+            }
+
+            nodosExplorados++;
+
+            for (Paso paso : sucesores(estado)) {
+                Estado siguiente = estado.realizarMovimiento(paso);
                 int costo = actual.getCostoAcumulado() + 1;
                 Integer previo = mejorCosto.get(siguiente.getClave());
 
                 if (previo == null || costo < previo) {
                     mejorCosto.put(siguiente.getClave(), costo);
-                    abiertos.add(new Nodo(siguiente, actual, paso, costo, heuristica(siguiente), peso));
+
+                    abiertos.add(new Nodo(
+                            siguiente,
+                            actual,
+                            paso,
+                            costo,
+                            heuristica(siguiente),
+                            peso
+                    ));
+
+                    nodosGenerados++;
                 }
             }
         }
 
+        resultadoBusqueda = ResultadoBusqueda.SIN_SOLUCION;
         return null;
     }
 
@@ -57,30 +108,33 @@ public class SolucionadorTablero {
             for (Movimiento movimiento : Movimiento.values()) {
                 int df = movimiento.getMovimientoFila();
                 int dc = movimiento.getMovimientoColumna();
-                boolean todosDentro = true;
+
+                boolean dentro = true;
                 boolean libre = true;
 
                 for (int parte = 0; parte < pieza.getTamano(); parte++) {
                     int nf = fila + pieza.getDesplazamientoFila(parte) + df;
                     int nc = columna + pieza.getDesplazamientoColumna(parte) + dc;
 
-                    if (nf < 0 || nc < 0 || nf >= numeroDeLados || nc >= numeroDeLados) {
-                        todosDentro = false;
+                    if (nf < 0 || nc < 0 || nf >= numeroFilas || nc >= numeroColumnas) {
+                        dentro = false;
                         continue;
                     }
 
                     int ocupante = estado.get(nf, nc);
+
                     if (ocupante != 0 && ocupante != pieza.getId()) {
                         libre = false;
                         break;
                     }
                 }
 
-                if (todosDentro && libre) {
+                if (!libre) continue;
+
+                if (dentro)
                     pasos.add(new Paso(fila, columna, movimiento, false, pieza));
-                } else if (!todosDentro && libre && puedeSalirCompleta(pieza, movimiento, fila, columna)) {
+                else if (puedeSalirCompleta(pieza, movimiento, fila, columna))
                     pasos.add(new Paso(fila, columna, movimiento, true, pieza));
-                }
             }
         }
 
@@ -90,39 +144,61 @@ public class SolucionadorTablero {
     private boolean puedeSalirCompleta(Pieza pieza, Movimiento movimiento, int fila, int columna) {
         LadoSalida lado = movimiento.getLadoSalida();
 
-        if (pieza.getTamano() == 2) {
-            if (pieza.getOrientacion() == Orientacion.VERTICAL
-                    && lado != LadoSalida.ARRIBA
-                    && lado != LadoSalida.ABAJO) return false;
+        if (!pieza.permiteSalida(lado)) return false;
 
-            if (pieza.getOrientacion() == Orientacion.HORIZONTAL
-                    && lado != LadoSalida.IZQUIERDA
-                    && lado != LadoSalida.DERECHA) return false;
+        int tamanoSalida = pieza.getTamano() >= 3 ? 2 : 1;
+        int[] cara = pieza.getForma().getIndicesCara(lado);
+
+        if (pieza.getTamano() >= 3 && cara.length != 2) return false;
+
+        int extremo = lado == LadoSalida.ARRIBA || lado == LadoSalida.IZQUIERDA
+                ? Integer.MAX_VALUE : Integer.MIN_VALUE;
+
+        int[] posiciones = new int[cara.length];
+
+        for (int i = 0; i < cara.length; i++) {
+            int parte = cara[i];
+            int f = fila + pieza.getDesplazamientoFila(parte);
+            int c = columna + pieza.getDesplazamientoColumna(parte);
+
+            int coordenada = lado == LadoSalida.ARRIBA || lado == LadoSalida.ABAJO ? f : c;
+
+            if (lado == LadoSalida.ARRIBA || lado == LadoSalida.IZQUIERDA)
+                extremo = Math.min(extremo, coordenada);
+            else extremo = Math.max(extremo, coordenada);
+
+            posiciones[i] = lado == LadoSalida.ARRIBA || lado == LadoSalida.ABAJO ? c : f;
         }
 
+        boolean tocaBorde;
+
+        switch (lado) {
+            case ARRIBA: tocaBorde = extremo == 0; break;
+            case ABAJO: tocaBorde = extremo == numeroFilas - 1; break;
+            case IZQUIERDA: tocaBorde = extremo == 0; break;
+            default: tocaBorde = extremo == numeroColumnas - 1;
+        }
+
+        if (!tocaBorde) return false;
+
+        Arrays.sort(posiciones);
+
         for (Salida salida : salidas) {
-            if (salida.getLadoSalida() != lado || salida.getColorFicha() != pieza.getColor()) continue;
+            if (salida.getColorFicha() != pieza.getColor()) continue;
+            if (salida.getLadoSalida() != lado) continue;
+            if (salida.getTamano() != tamanoSalida) continue;
 
-            if (pieza.getTamano() == 1) {
-                int f = fila + movimiento.getMovimientoFila();
-                int c = columna + movimiento.getMovimientoColumna();
+            if (pieza.getTamano() >= 3) {
+                if (posiciones[1] != posiciones[0] + 1) continue;
 
-                if (f < 0 || c < 0 || f >= numeroDeLados || c >= numeroDeLados)
-                    return fila == salida.getFila(numeroDeLados) && columna == salida.getColumna(numeroDeLados);
-            } else if (pieza.getOrientacion() == Orientacion.VERTICAL) {
-                int columnaPieza = columna;
+                if (posiciones[0] == salida.getIndice()
+                        && posiciones[1] == salida.getIndice() + 1)
+                    return true;
+            } else {
+                int indice = lado == LadoSalida.ARRIBA || lado == LadoSalida.ABAJO
+                        ? columna : fila;
 
-                if (salida.getIndice() != columnaPieza) continue;
-
-                if (lado == LadoSalida.ARRIBA && fila == 0) return true;
-                if (lado == LadoSalida.ABAJO && fila + 1 == numeroDeLados - 1) return true;
-            } else if (pieza.getOrientacion() == Orientacion.HORIZONTAL) {
-                int filaPieza = fila;
-
-                if (salida.getIndice() != filaPieza) continue;
-
-                if (lado == LadoSalida.IZQUIERDA && columna == 0) return true;
-                if (lado == LadoSalida.DERECHA && columna + 1 == numeroDeLados - 1) return true;
+                if (indice == salida.getIndice()) return true;
             }
         }
 
@@ -137,22 +213,70 @@ public class SolucionadorTablero {
             if (origen == null) continue;
 
             int mejor = Integer.MAX_VALUE;
+            int tamanoSalida = pieza.getTamano() >= 3 ? 2 : 1;
 
             for (Salida salida : salidas) {
                 if (salida.getColorFicha() != pieza.getColor()) continue;
+                if (salida.getTamano() != tamanoSalida) continue;
+                if (!pieza.permiteSalida(salida.getLadoSalida())) continue;
 
-                for (int parte = 0; parte < pieza.getTamano(); parte++) {
-                    int fila = origen[0] + pieza.getDesplazamientoFila(parte);
-                    int columna = origen[1] + pieza.getDesplazamientoColumna(parte);
+                int[] cara = pieza.getForma().getIndicesCara(salida.getLadoSalida());
 
-                    int distancia = Math.abs(fila - salida.getFila(numeroDeLados))
-                            + Math.abs(columna - salida.getColumna(numeroDeLados)) + 1;
+                if (cara.length != tamanoSalida) continue;
 
-                    mejor = Math.min(mejor, distancia);
+                int minimo = Integer.MAX_VALUE;
+                int extremo = 0;
+
+                for (int parte : cara) {
+                    int f = origen[0] + pieza.getDesplazamientoFila(parte);
+                    int c = origen[1] + pieza.getDesplazamientoColumna(parte);
+
+                    int posicion = salida.getLadoSalida() == LadoSalida.ARRIBA
+                            || salida.getLadoSalida() == LadoSalida.ABAJO ? c : f;
+
+                    minimo = Math.min(minimo, posicion);
                 }
+
+                switch (salida.getLadoSalida()) {
+                    case ARRIBA:
+                        extremo = Integer.MAX_VALUE;
+                        for (int parte : cara)
+                            extremo = Math.min(extremo, origen[0] + pieza.getDesplazamientoFila(parte));
+                        break;
+                    case ABAJO:
+                        extremo = Integer.MIN_VALUE;
+                        for (int parte : cara)
+                            extremo = Math.max(extremo, origen[0] + pieza.getDesplazamientoFila(parte));
+                        break;
+                    case IZQUIERDA:
+                        extremo = Integer.MAX_VALUE;
+                        for (int parte : cara)
+                            extremo = Math.min(extremo, origen[1] + pieza.getDesplazamientoColumna(parte));
+                        break;
+                    default:
+                        extremo = Integer.MIN_VALUE;
+                        for (int parte : cara)
+                            extremo = Math.max(extremo, origen[1] + pieza.getDesplazamientoColumna(parte));
+                        break;
+                }
+
+                int distanciaBorde;
+
+                switch (salida.getLadoSalida()) {
+                    case ARRIBA: distanciaBorde = extremo; break;
+                    case ABAJO: distanciaBorde = numeroFilas - 1 - extremo; break;
+                    case IZQUIERDA: distanciaBorde = extremo; break;
+                    default: distanciaBorde = numeroColumnas - 1 - extremo;
+                }
+
+                int distanciaLateral = Math.abs(minimo - salida.getIndice());
+                int distancia = distanciaBorde + distanciaLateral + 1;
+
+                mejor = Math.min(mejor, distancia);
             }
 
-            if (mejor == Integer.MAX_VALUE) throw new IllegalStateException("Pieza sin salida compatible");
+            if (mejor == Integer.MAX_VALUE)
+                throw new IllegalStateException("Pieza sin salida compatible: " + pieza.getColor());
 
             total += mejor;
         }

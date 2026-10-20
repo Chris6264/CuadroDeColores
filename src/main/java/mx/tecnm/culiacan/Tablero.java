@@ -3,7 +3,7 @@ package mx.tecnm.culiacan;
 import java.util.*;
 import java.util.stream.Collectors;
 
-public class Tablero {
+public class Tablero implements TableroJuego{
     private final int[][] tablero;
     private final Estado estadoInicial;
     private Estado estadoActual;
@@ -28,6 +28,12 @@ public class Tablero {
     }
 
     public int getNumeroDeLados() { return numeroDeLados; }
+
+    @Override
+    public int getNumeroFilas() { return numeroDeLados; }
+
+    @Override
+    public int getNumeroColumnas() { return numeroDeLados; }
 
     public List<Salida> getSalidas() { return salidas; }
 
@@ -337,62 +343,17 @@ public class Tablero {
         return ' ';
     }
 
-    @Override
-    public String toString() {
-        StringBuilder sb = new StringBuilder();
-
-        sb.append("    ");
-
-        for (int j = 0; j < numeroDeLados; j++)
-            sb.append(simboloSalida(LadoSalida.ARRIBA, j)).append("   ");
-
-        sb.append("\n");
-
-        for (int i = 0; i < numeroDeLados; i++) {
-            sb.append("  ");
-
-            for (int j = 0; j < numeroDeLados; j++) {
-                sb.append("+");
-
-                int id = estadoActual.get(i, j);
-                int superior = i > 0 ? estadoActual.get(i - 1, j) : 0;
-
-                if (id != 0 && id == superior) sb.append("   ");
-                else sb.append("---");
-            }
-
-            sb.append("+\n");
-            sb.append(simboloSalida(LadoSalida.IZQUIERDA, i)).append(" ");
-
-            for (int j = 0; j < numeroDeLados; j++) {
-                int id = estadoActual.get(i, j);
-                int anterior = j > 0 ? estadoActual.get(i, j - 1) : 0;
-
-                if (j == 0 || id == 0 || id != anterior) sb.append("|");
-                else sb.append(" ");
-
-                char simbolo = id == 0 ? ' '
-                        : piezas.get(id - 1).getColor().getSimbolo();
-
-                sb.append(" ").append(simbolo).append(" ");
-            }
-
-            sb.append("| ")
-                    .append(simboloSalida(LadoSalida.DERECHA, i))
-                    .append("\n");
+    private String colorSalida(LadoSalida lado, int indice) {
+        for (Salida salida : salidas) {
+            if (salida.ocupaPosicion(lado, indice))
+                return salida.getColorFicha().getBloqueColor();
         }
 
-        sb.append("  ");
+        return "   ";
+    }
 
-        for (int j = 0; j < numeroDeLados; j++)
-            sb.append("+---");
-
-        sb.append("+\n");
-        sb.append("    ");
-
-        for (int j = 0; j < numeroDeLados; j++)
-            sb.append(simboloSalida(LadoSalida.ABAJO, j)).append("   ");
-
-        return sb.append("\n").toString();
+    @Override
+    public String toString() {
+        return new ImpresorTablero(estadoActual, piezas, salidas).toString();
     }
 }

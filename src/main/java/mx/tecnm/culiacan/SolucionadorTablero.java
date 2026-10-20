@@ -1,4 +1,3 @@
-
 package mx.tecnm.culiacan;
 
 import java.util.*;
@@ -157,10 +156,8 @@ public class SolucionadorTablero {
 
         if (!pieza.permiteSalida(lado)) return false;
 
-        int tamanoSalida = pieza.getTamano() >= 3 ? 2 : 1;
         int[] cara = pieza.getForma().getIndicesCara(lado);
-
-        if (pieza.getTamano() >= 3 && cara.length != 2) return false;
+        int tamanoSalida = cara.length;
 
         int extremo = Integer.MIN_VALUE;
         int minimo = Integer.MAX_VALUE;
@@ -207,15 +204,10 @@ public class SolucionadorTablero {
             if (salida.getLadoSalida() != lado) continue;
             if (salida.getTamano() != tamanoSalida) continue;
 
-            if (tamanoSalida == 2) {
-                if (maximo != minimo + 1) continue;
+            if (maximo != minimo + tamanoSalida - 1) continue;
 
-                if (minimo == salida.getIndice()
-                        && maximo == salida.getIndice() + 1)
-                    return true;
-            } else if (minimo == salida.getIndice()) {
+            if (minimo == salida.getIndice())
                 return true;
-            }
         }
 
         return false;
@@ -229,18 +221,15 @@ public class SolucionadorTablero {
             if (origen == null) continue;
 
             int mejor = Integer.MAX_VALUE;
-            int tamanoSalida = pieza.getTamano() >= 3 ? 2 : 1;
 
             for (Salida salida : salidas) {
                 LadoSalida lado = salida.getLadoSalida();
 
                 if (salida.getColorFicha() != pieza.getColor()) continue;
-                if (salida.getTamano() != tamanoSalida) continue;
                 if (!pieza.permiteSalida(lado)) continue;
+                if (salida.getTamano() != pieza.getForma().getTamanoSalida(lado)) continue;
 
                 int[] cara = pieza.getForma().getIndicesCara(lado);
-
-                if (tamanoSalida == 2 && cara.length != 2) continue;
 
                 int minimo = Integer.MAX_VALUE;
                 int extremo = 0;

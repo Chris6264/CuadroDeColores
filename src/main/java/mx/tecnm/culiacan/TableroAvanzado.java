@@ -191,6 +191,9 @@ public class TableroAvanzado implements TableroJuego {
             for (int columna = 0; columna < numeroColumnas; columna++) {
                 int id = tablero[fila][columna] - 1;
 
+                if (id < 0 || id >= cantidad)
+                    throw new IllegalStateException("Identificador de pieza incorrecto");
+
                 for (Movimiento movimiento : Movimiento.values()) {
                     int nf = fila + movimiento.getMovimientoFila();
                     int nc = columna + movimiento.getMovimientoColumna();
@@ -198,6 +201,9 @@ public class TableroAvanzado implements TableroJuego {
                     if (nf < 0 || nc < 0 || nf >= numeroFilas || nc >= numeroColumnas) continue;
 
                     int vecino = tablero[nf][nc] - 1;
+
+                    if (vecino < 0 || vecino >= cantidad)
+                        throw new IllegalStateException("Identificador vecino incorrecto");
 
                     if (id != vecino) vecinos.get(id).add(vecino);
                 }
@@ -235,6 +241,9 @@ public class TableroAvanzado implements TableroJuego {
                 }
             }
 
+            if (seleccionado == -1)
+                throw new IllegalStateException("No se pudo seleccionar una pieza para colorear");
+
             int grupoActual = grupo(formas.get(seleccionado));
             Set<Integer> prohibidos = new HashSet<>();
 
@@ -262,15 +271,19 @@ public class TableroAvanzado implements TableroJuego {
             }
 
             if (elegido == -1)
-                throw new IllegalStateException("No fue posible colorear esta distribución con 10 colores");
+                throw new IllegalStateException("No hay colores compatibles para esta distribución");
 
             asignados[seleccionado] = elegido;
         }
 
         piezas.clear();
 
-        for (int i = 0; i < cantidad; i++)
+        for (int i = 0; i < cantidad; i++) {
+            if (asignados[i] < 0 || asignados[i] >= colores.size())
+                throw new IllegalStateException("Color no asignado a la pieza " + (i + 1));
+
             piezas.add(new Pieza(i + 1, colores.get(asignados[i]), formas.get(i)));
+        }
     }
 
     private Set<Ficha> obtenerColoresVecinos(int id) {

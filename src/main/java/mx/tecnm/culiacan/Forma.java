@@ -1,3 +1,4 @@
+
 package mx.tecnm.culiacan;
 
 import java.util.ArrayList;
@@ -14,9 +15,14 @@ public enum Forma {
     CUADRADO(new int[][]{{0, 0}, {0, 1}, {1, 0}, {1, 1}});
 
     private final int[][] posiciones;
+    private final int[][] caras;
 
     Forma(int[][] posiciones) {
         this.posiciones = posiciones;
+        this.caras = new int[LadoSalida.values().length][];
+
+        for (LadoSalida lado : LadoSalida.values())
+            caras[lado.ordinal()] = calcularIndicesCara(lado);
     }
 
     public int getTamano() { return posiciones.length; }
@@ -29,29 +35,32 @@ public enum Forma {
         return this == L1 || this == L2 || this == L3 || this == L4;
     }
 
-    public int[] getIndicesCara(LadoSalida lado) {
-        int extremo = lado == LadoSalida.ARRIBA || lado == LadoSalida.IZQUIERDA
-                ? Integer.MAX_VALUE : Integer.MIN_VALUE;
+    private int[] calcularIndicesCara(LadoSalida lado) {
+        boolean minimo = lado == LadoSalida.ARRIBA || lado == LadoSalida.IZQUIERDA;
+        boolean horizontal = lado == LadoSalida.ARRIBA || lado == LadoSalida.ABAJO;
+
+        int extremo = minimo ? Integer.MAX_VALUE : Integer.MIN_VALUE;
 
         for (int[] posicion : posiciones) {
-            int valor = lado == LadoSalida.ARRIBA || lado == LadoSalida.ABAJO
-                    ? posicion[0] : posicion[1];
+            int valor = horizontal ? posicion[0] : posicion[1];
 
-            if (lado == LadoSalida.ARRIBA || lado == LadoSalida.IZQUIERDA)
-                extremo = Math.min(extremo, valor);
+            if (minimo) extremo = Math.min(extremo, valor);
             else extremo = Math.max(extremo, valor);
         }
 
         List<Integer> indices = new ArrayList<>();
 
         for (int i = 0; i < posiciones.length; i++) {
-            int valor = lado == LadoSalida.ARRIBA || lado == LadoSalida.ABAJO
-                    ? posiciones[i][0] : posiciones[i][1];
+            int valor = horizontal ? posiciones[i][0] : posiciones[i][1];
 
             if (valor == extremo) indices.add(i);
         }
 
         return indices.stream().mapToInt(Integer::intValue).toArray();
+    }
+
+    public int[] getIndicesCara(LadoSalida lado) {
+        return caras[lado.ordinal()];
     }
 
     public boolean permiteSalida(LadoSalida lado) {

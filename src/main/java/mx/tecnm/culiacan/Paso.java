@@ -5,39 +5,32 @@ public class Paso {
     private final int columna;
     private final Movimiento movimiento;
     private final boolean fichaSale;
-    private final Ficha ficha;
+    private final Pieza pieza;
 
-    public Paso(int fila, int columna, Movimiento movimiento, boolean fichaSale, Ficha ficha) {
+    public Paso(int fila, int columna, Movimiento movimiento, boolean fichaSale, Pieza pieza) {
         this.fila = fila;
         this.columna = columna;
         this.movimiento = movimiento;
         this.fichaSale = fichaSale;
-        this.ficha = ficha;
+        this.pieza = pieza;
     }
 
-    public int getFila() {
-        return fila;
-    }
+    public int getFila() { return fila; }
 
-    public int getColumna() {
-        return columna;
-    }
+    public int getColumna() { return columna; }
 
-    public Movimiento getMovimiento() {
-        return movimiento;
-    }
+    public Movimiento getMovimiento() { return movimiento; }
 
-    public boolean fichaSale() {
-        return fichaSale;
-    }
+    public boolean fichaSale() { return fichaSale; }
 
-    public Ficha getFicha() {
-        return ficha;
-    }
+    public Pieza getPieza() { return pieza; }
+
+    public Ficha getFicha() { return pieza.getColor(); }
 
     @Override
     public String toString() {
-        return (fichaSale ? "Sacar " : "Mover ") + ficha + " (" + ficha.getSimbolo() + ") de ["
-                + fila + "," + columna + "] hacia " + movimiento;
+        return (fichaSale ? "Sacar " : "Mover ")
+                + pieza.getColor() + " (" + pieza.getColor().getSimbolo()
+                + ") de [" + fila + "," + columna + "] hacia " + movimiento;
     }
 }

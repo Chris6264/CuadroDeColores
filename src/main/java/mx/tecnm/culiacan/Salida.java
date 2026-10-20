@@ -5,26 +5,19 @@ public class Salida {
     private final int indice;
     private final Ficha colorFicha;
 
-
     public Salida(LadoSalida ladoSalida, int indice, Ficha colorFicha) {
         this.ladoSalida = ladoSalida;
         this.indice = indice;
         this.colorFicha = colorFicha;
     }
 
-    public LadoSalida getLadoSalida() {
-        return ladoSalida;
-    }
+    public LadoSalida getLadoSalida() { return ladoSalida; }
 
-    public int getIndice() {
-        return indice;
-    }
+    public int getIndice() { return indice; }
 
-    public Ficha getColorFicha() {
-        return colorFicha;
-    }
+    public Ficha getColorFicha() { return colorFicha; }
 
-    public int getFila(int n){
+    public int getFila(int n) {
         switch (ladoSalida) {
             case ARRIBA: return 0;
             case ABAJO: return n - 1;
@@ -32,8 +25,8 @@ public class Salida {
         }
     }
 
-    public int getColumna(int n){
-        switch (ladoSalida){
+    public int getColumna(int n) {
+        switch (ladoSalida) {
             case IZQUIERDA: return 0;
             case DERECHA: return n - 1;
             default: return indice;

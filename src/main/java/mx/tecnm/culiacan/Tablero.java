@@ -4,45 +4,34 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 public class Tablero {
-    private static final int MINIMO_COLORES = 3;
-    private static final int MAXIMO_COLORES = Ficha.values().length - 1;
-
-    private final Ficha[][] tablero;
-    private Ficha[] coloresActivos;
+    private final int[][] tablero;
     private final Estado estadoInicial;
     private Estado estadoActual;
-    private final Reglas reglas;
-    private final int numeroDeColores;
     private final int numeroDeLados;
     private final List<Salida> salidas = new ArrayList<>();
-    private final Random random;
+    private final List<Pieza> piezas = new ArrayList<>();
+    private final Random random = new Random();
 
     public Tablero(Reglas reglas) {
-        this.reglas = reglas;
-        this.numeroDeLados = 2;
-        this.random = new Random();
-        this.numeroDeColores = 2;
-        this.tablero = new Ficha[numeroDeLados][numeroDeLados];
-        llenarTablero();
-        this.estadoInicial = new Estado(tablero);
-        this.estadoActual = estadoInicial;
+        this(2, reglas);
     }
 
     public Tablero(int numeroDeLados, Reglas reglas) {
-        this.reglas = reglas;
         reglas.validarCampos(numeroDeLados);
         this.numeroDeLados = numeroDeLados;
-        this.tablero = new Ficha[numeroDeLados][numeroDeLados];
-        this.random = new Random();
-        this.numeroDeColores = MINIMO_COLORES + random.nextInt(MAXIMO_COLORES - MINIMO_COLORES + 1);
+        this.tablero = new int[numeroDeLados][numeroDeLados];
+
         llenarTablero();
-        this.estadoInicial = new Estado(tablero);
-        this.estadoActual = estadoInicial;
+
+        estadoInicial = new Estado(tablero);
+        estadoActual = estadoInicial;
     }
 
     public int getNumeroDeLados() { return numeroDeLados; }
 
     public List<Salida> getSalidas() { return salidas; }
+
+    public List<Pieza> getPiezas() { return piezas; }
 
     public Estado getEstadoInicial() { return estadoInicial; }
 
@@ -52,104 +41,358 @@ public class Tablero {
         estadoActual = estadoActual.realizarMovimiento(paso);
     }
 
-    private void llenarTablero(){
-        escogerColores();
+    private void llenarTablero() {
+        if (numeroDeLados == 2) llenarBasico();
+        else llenarIntermedio();
+    }
+
+    private void llenarBasico() {
+        List<Ficha> colores = obtenerColores();
+        Collections.shuffle(colores, random);
+
+        List<Ficha> fichas = new ArrayList<>();
+
+        fichas.add(colores.get(0));
+        fichas.add(colores.get(0));
+        fichas.add(colores.get(1));
+        fichas.add(colores.get(1));
+
+        Collections.shuffle(fichas, random);
+
+        int id = 1;
+
+        for (int fila = 0; fila < numeroDeLados; fila++) {
+            for (int columna = 0; columna < numeroDeLados; columna++) {
+                tablero[fila][columna] = id;
+                piezas.add(new Pieza(id, fichas.get(id - 1), Orientacion.INDIVIDUAL));
+                id++;
+            }
+        }
+
+        colocarSalidasBasicas();
+    }
+
+    private void llenarIntermedio() {
+        List<Orientacion> orientaciones = new ArrayList<>();
+        int id = 1;
+
+        tablero[0][0] = id;
+        tablero[0][1] = id++;
+        orientaciones.add(Orientacion.HORIZONTAL);
+
+        tablero[1][numeroDeLados - 1] = id;
+        tablero[2][numeroDeLados - 1] = id++;
+        orientaciones.add(Orientacion.VERTICAL);
+
+        tablero[1][0] = id++;
+        orientaciones.add(Orientacion.INDIVIDUAL);
 
         List<int[]> casillas = new ArrayList<>();
-        for (int i = 0; i < numeroDeLados; i++)
-            for (int j = 0; j < numeroDeLados; j++)
-                casillas.add(new int[]{i, j});
+
+        for (int fila = 0; fila < numeroDeLados; fila++)
+            for (int columna = 0; columna < numeroDeLados; columna++)
+                casillas.add(new int[]{fila, columna});
+
         Collections.shuffle(casillas, random);
 
-        for (int k = 0; k < casillas.size(); k++) {
-            int[] casilla = casillas.get(k);
-            Ficha ficha = k < coloresActivos.length
-                    ? coloresActivos[k]
-                    : coloresActivos[random.nextInt(coloresActivos.length)];
-            tablero[casilla[0]][casilla[1]] = ficha;
+        for (int[] casilla : casillas) {
+            int fila = casilla[0];
+            int columna = casilla[1];
+
+            if (tablero[fila][columna] != 0) continue;
+
+            List<Orientacion> opciones = new ArrayList<>();
+
+            if (columna + 1 < numeroDeLados && tablero[fila][columna + 1] == 0)
+                opciones.add(Orientacion.HORIZONTAL);
+
+            if (fila + 1 < numeroDeLados && tablero[fila + 1][columna] == 0)
+                opciones.add(Orientacion.VERTICAL);
+
+            Orientacion orientacion = Orientacion.INDIVIDUAL;
+
+            if (!opciones.isEmpty() && random.nextDouble() < 0.65)
+                orientacion = opciones.get(random.nextInt(opciones.size()));
+
+            tablero[fila][columna] = id;
+
+            if (orientacion == Orientacion.HORIZONTAL)
+                tablero[fila][columna + 1] = id;
+
+            if (orientacion == Orientacion.VERTICAL)
+                tablero[fila + 1][columna] = id;
+
+            orientaciones.add(orientacion);
+            id++;
         }
 
-        colocarSalidas();
+        asignarColores(orientaciones);
+        colocarSalidasIntermedias();
+        validarTablero();
     }
 
-    private void escogerColores(){
-        List<Ficha> coloresCandidatos = Arrays.stream(Ficha.values())
+    private List<Ficha> obtenerColores() {
+        return Arrays.stream(Ficha.values())
                 .filter(ficha -> ficha != Ficha.VACIA)
                 .collect(Collectors.toList());
-
-        Collections.shuffle(coloresCandidatos, random);
-
-        coloresActivos = coloresCandidatos.stream()
-                .limit(numeroDeColores)
-                .toArray(Ficha[]::new);
     }
 
-    private int[] buscarFicha(Ficha color){
-        for (int i = 0; i < numeroDeLados; i++)
-            for (int j = 0; j < numeroDeLados; j++)
-                if (tablero[i][j] == color) return new int[]{i, j};
-        return null;
+    private void asignarColores(List<Orientacion> orientaciones) {
+        List<Ficha> colores = obtenerColores();
+        Collections.shuffle(colores, random);
+
+        Map<Orientacion, List<Ficha>> coloresPorOrientacion = new EnumMap<>(Orientacion.class);
+
+        coloresPorOrientacion.put(Orientacion.INDIVIDUAL, new ArrayList<>(colores.subList(0, 4)));
+        coloresPorOrientacion.put(Orientacion.HORIZONTAL, new ArrayList<>(colores.subList(4, 7)));
+        coloresPorOrientacion.put(Orientacion.VERTICAL, new ArrayList<>(colores.subList(7, 10)));
+
+        for (int i = 0; i < orientaciones.size(); i++) {
+            int id = i + 1;
+            Orientacion orientacion = orientaciones.get(i);
+            Set<Ficha> coloresVecinos = new HashSet<>();
+
+            for (int fila = 0; fila < numeroDeLados; fila++) {
+                for (int columna = 0; columna < numeroDeLados; columna++) {
+                    if (tablero[fila][columna] != id) continue;
+
+                    for (Movimiento movimiento : Movimiento.values()) {
+                        int nf = fila + movimiento.getMovimientoFila();
+                        int nc = columna + movimiento.getMovimientoColumna();
+
+                        if (nf < 0 || nc < 0 || nf >= numeroDeLados || nc >= numeroDeLados) continue;
+
+                        int vecino = tablero[nf][nc];
+
+                        if (vecino == 0 || vecino == id || vecino > piezas.size()) continue;
+
+                        coloresVecinos.add(piezas.get(vecino - 1).getColor());
+                    }
+                }
+            }
+
+            List<Ficha> disponibles = new ArrayList<>();
+
+            for (Ficha color : coloresPorOrientacion.get(orientacion))
+                if (!coloresVecinos.contains(color))
+                    disponibles.add(color);
+
+            if (disponibles.isEmpty())
+                throw new IllegalStateException("No hay colores disponibles para la pieza");
+
+            Ficha color = disponibles.get(random.nextInt(disponibles.size()));
+
+            piezas.add(new Pieza(id, color, orientacion));
+        }
     }
 
-    private void colocarSalidas(){
-        List<int[]> espacios = new ArrayList<>();
-        for (LadoSalida lado : LadoSalida.values())
-            for (int i = 0; i < numeroDeLados; i++)
-                espacios.add(new int[]{lado.ordinal(), i});
+    private void colocarSalidasBasicas() {
+        salidas.clear();
+
+        List<Ficha> colores = piezas.stream()
+                .map(Pieza::getColor)
+                .distinct()
+                .collect(Collectors.toList());
+
+        List<int[]> espacios = obtenerEspaciosSalida();
         Collections.shuffle(espacios, random);
 
-        for (int j = 0; j < coloresActivos.length; j++){
-            int[] espacio = espacios.get(j);
-            salidas.add(new Salida(LadoSalida.values()[espacio[0]], espacio[1], coloresActivos[j]));
+        for (int i = 0; i < colores.size(); i++) {
+            int[] espacio = espacios.get(i);
+
+            salidas.add(new Salida(
+                    LadoSalida.values()[espacio[0]],
+                    espacio[1],
+                    colores.get(i)
+            ));
         }
 
-        boolean hayCoincidencia = salidas.stream().anyMatch(salida -> tablero[salida.getFila(numeroDeLados)]
-                [salida.getColumna(numeroDeLados)] == salida.getColorFicha());
+        boolean coincidencia = false;
 
-        if (!hayCoincidencia){
-            Salida salida = salidas.get(random.nextInt(salidas.size()));
+        for (Salida salida : salidas) {
             int fila = salida.getFila(numeroDeLados);
             int columna = salida.getColumna(numeroDeLados);
-            int[] origen = buscarFicha(salida.getColorFicha());
+            int id = tablero[fila][columna];
 
-            if (origen != null) {
-                Ficha temporal = tablero[fila][columna];
-                tablero[fila][columna] = tablero[origen[0]][origen[1]];
-                tablero[origen[0]][origen[1]] = temporal;
-            } else {
-                tablero[fila][columna] = salida.getColorFicha();
+            if (piezas.get(id - 1).getColor() == salida.getColorFicha()) {
+                coincidencia = true;
+                break;
+            }
+        }
+
+        if (!coincidencia) {
+            Salida salida = salidas.get(0);
+            int fila = salida.getFila(numeroDeLados);
+            int columna = salida.getColumna(numeroDeLados);
+
+            for (int i = 0; i < numeroDeLados; i++) {
+                for (int j = 0; j < numeroDeLados; j++) {
+                    int id = tablero[i][j];
+
+                    if (piezas.get(id - 1).getColor() == salida.getColorFicha()) {
+                        int temporal = tablero[fila][columna];
+                        tablero[fila][columna] = tablero[i][j];
+                        tablero[i][j] = temporal;
+                        return;
+                    }
+                }
             }
         }
     }
 
-    private char simboloSalida(LadoSalida ladoSalida, int indice){
+    private void colocarSalidasIntermedias() {
+        salidas.clear();
+
+        Map<Ficha, Orientacion> orientaciones = new LinkedHashMap<>();
+
+        for (Pieza pieza : piezas) {
+            Orientacion anterior = orientaciones.putIfAbsent(
+                    pieza.getColor(),
+                    pieza.getOrientacion()
+            );
+
+            if (anterior != null && anterior != pieza.getOrientacion())
+                throw new IllegalStateException("Color con orientaciones incompatibles");
+        }
+
+        List<Ficha> colores = new ArrayList<>(orientaciones.keySet());
+        Set<String> espaciosOcupados = new HashSet<>();
+
+        Pieza primera = piezas.get(0);
+
+        Salida inicial = new Salida(
+                LadoSalida.IZQUIERDA,
+                0,
+                primera.getColor()
+        );
+
+        salidas.add(inicial);
+        espaciosOcupados.add("IZQUIERDA-0");
+        colores.remove(primera.getColor());
+
+        for (Ficha color : colores) {
+            Orientacion orientacion = orientaciones.get(color);
+            List<Salida> candidatas = new ArrayList<>();
+
+            for (LadoSalida lado : LadoSalida.values()) {
+                if (!ladoCompatible(orientacion, lado)) continue;
+
+                for (int indice = 0; indice < numeroDeLados; indice++) {
+                    String clave = lado + "-" + indice;
+
+                    if (!espaciosOcupados.contains(clave))
+                        candidatas.add(new Salida(lado, indice, color));
+                }
+            }
+
+            if (candidatas.isEmpty())
+                throw new IllegalStateException("No hay salida para el color " + color);
+
+            Salida salida = candidatas.get(random.nextInt(candidatas.size()));
+
+            salidas.add(salida);
+            espaciosOcupados.add(salida.getLadoSalida() + "-" + salida.getIndice());
+        }
+    }
+
+    private boolean ladoCompatible(Orientacion orientacion, LadoSalida lado) {
+        if (orientacion == Orientacion.INDIVIDUAL) return true;
+
+        if (orientacion == Orientacion.HORIZONTAL)
+            return lado == LadoSalida.IZQUIERDA || lado == LadoSalida.DERECHA;
+
+        return lado == LadoSalida.ARRIBA || lado == LadoSalida.ABAJO;
+    }
+
+    private List<int[]> obtenerEspaciosSalida() {
+        List<int[]> espacios = new ArrayList<>();
+
+        for (LadoSalida lado : LadoSalida.values())
+            for (int i = 0; i < numeroDeLados; i++)
+                espacios.add(new int[]{lado.ordinal(), i});
+
+        return espacios;
+    }
+
+    private void validarTablero() {
+        for (int fila = 0; fila < numeroDeLados; fila++)
+            for (int columna = 0; columna < numeroDeLados; columna++)
+                if (tablero[fila][columna] == 0)
+                    throw new IllegalStateException("El tablero contiene espacios vacíos");
+
+        long colores = piezas.stream()
+                .map(Pieza::getColor)
+                .distinct()
+                .count();
+
+        if (colores < 3 || colores > 10)
+            throw new IllegalStateException("Cantidad de colores incorrecta");
+    }
+
+    private char simboloSalida(LadoSalida lado, int indice) {
         for (Salida salida : salidas)
-            if (salida.getLadoSalida() == ladoSalida && salida.getIndice() == indice)
+            if (salida.getLadoSalida() == lado && salida.getIndice() == indice)
                 return salida.getColorFicha().getSimbolo();
+
         return ' ';
     }
 
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();
-        String separador = "  +" + "---+".repeat(numeroDeLados) + "\n";
 
         sb.append("    ");
+
         for (int j = 0; j < numeroDeLados; j++)
             sb.append(simboloSalida(LadoSalida.ARRIBA, j)).append("   ");
-        sb.append("\n").append(separador);
+
+        sb.append("\n");
 
         for (int i = 0; i < numeroDeLados; i++) {
-            sb.append(simboloSalida(LadoSalida.IZQUIERDA, i)).append(" |");
-            for (int j = 0; j < numeroDeLados; j++)
-                sb.append(" ").append(estadoActual.get(i, j).getSimbolo()).append(" |");
-            sb.append(" ").append(simboloSalida(LadoSalida.DERECHA, i)).append("\n").append(separador);
+            sb.append("  ");
+
+            for (int j = 0; j < numeroDeLados; j++) {
+                sb.append("+");
+
+                int id = estadoActual.get(i, j);
+                int superior = i > 0 ? estadoActual.get(i - 1, j) : 0;
+
+                if (id != 0 && id == superior) sb.append("   ");
+                else sb.append("---");
+            }
+
+            sb.append("+\n");
+            sb.append(simboloSalida(LadoSalida.IZQUIERDA, i)).append(" ");
+
+            for (int j = 0; j < numeroDeLados; j++) {
+                int id = estadoActual.get(i, j);
+                int anterior = j > 0 ? estadoActual.get(i, j - 1) : 0;
+
+                if (j == 0 || id == 0 || id != anterior) sb.append("|");
+                else sb.append(" ");
+
+                char simbolo = id == 0 ? ' '
+                        : piezas.get(id - 1).getColor().getSimbolo();
+
+                sb.append(" ").append(simbolo).append(" ");
+            }
+
+            sb.append("| ")
+                    .append(simboloSalida(LadoSalida.DERECHA, i))
+                    .append("\n");
         }
 
+        sb.append("  ");
+
+        for (int j = 0; j < numeroDeLados; j++)
+            sb.append("+---");
+
+        sb.append("+\n");
         sb.append("    ");
+
         for (int j = 0; j < numeroDeLados; j++)
             sb.append(simboloSalida(LadoSalida.ABAJO, j)).append("   ");
-        sb.append("\n");
-        return sb.toString();
+
+        return sb.append("\n").toString();
     }
 }

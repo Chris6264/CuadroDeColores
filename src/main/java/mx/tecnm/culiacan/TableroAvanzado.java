@@ -200,12 +200,12 @@ public class TableroAvanzado implements TableroJuego {
                 reglas.validarIndicePieza(id, cantidad);
 
                 for (Movimiento movimiento : Movimiento.values()) {
-                    int nf = fila + movimiento.getMovimientoFila();
-                    int nc = columna + movimiento.getMovimientoColumna();
+                    int numeroFila = fila + movimiento.getMovimientoFila();
+                    int numeroColumna = columna + movimiento.getMovimientoColumna();
 
-                    if (nf < 0 || nc < 0 || nf >= numeroFilas || nc >= numeroColumnas) continue;
+                    if (numeroFila < 0 || numeroColumna < 0 || numeroFila >= numeroFilas || numeroColumna >= numeroColumnas) continue;
 
-                    int vecino = tablero[nf][nc] - 1;
+                    int vecino = tablero[numeroFila][numeroColumna] - 1;
 
                     reglas.validarIndiceVecino(vecino, cantidad);
 
@@ -366,25 +366,25 @@ public class TableroAvanzado implements TableroJuego {
 
         for (int i = 0; i < cara.length; i++) {
             int parte = cara[i];
-            int f = origen[0] + pieza.getDesplazamientoFila(parte);
-            int c = origen[1] + pieza.getDesplazamientoColumna(parte);
+            int fila = origen[0] + pieza.getDesplazamientoFila(parte);
+            int columna = origen[1] + pieza.getDesplazamientoColumna(parte);
 
             switch (salida.ladoSalida()) {
                 case ARRIBA:
-                    if (f != 0) return false;
-                    indices[i] = c;
+                    if (fila != 0) return false;
+                    indices[i] = columna;
                     break;
                 case ABAJO:
-                    if (f != numeroFilas - 1) return false;
-                    indices[i] = c;
+                    if (fila != numeroFilas - 1) return false;
+                    indices[i] = columna;
                     break;
                 case IZQUIERDA:
-                    if (c != 0) return false;
-                    indices[i] = f;
+                    if (columna != 0) return false;
+                    indices[i] = fila;
                     break;
                 case DERECHA:
-                    if (c != numeroColumnas - 1) return false;
-                    indices[i] = f;
+                    if (columna != numeroColumnas - 1) return false;
+                    indices[i] = fila;
                     break;
             }
         }

@@ -116,22 +116,22 @@ public class SolucionadorTablero {
             int columna = origen[1];
 
             for (Movimiento movimiento : Movimiento.values()) {
-                int df = movimiento.getMovimientoFila();
-                int dc = movimiento.getMovimientoColumna();
+                int movimientoFila = movimiento.getMovimientoFila();
+                int movimientoColumna = movimiento.getMovimientoColumna();
 
                 boolean dentro = true;
                 boolean libre = true;
 
                 for (int parte = 0; parte < pieza.getTamano(); parte++) {
-                    int nf = fila + pieza.getDesplazamientoFila(parte) + df;
-                    int nc = columna + pieza.getDesplazamientoColumna(parte) + dc;
+                    int numeroFila = fila + pieza.getDesplazamientoFila(parte) + movimientoFila;
+                    int numeroColumna = columna + pieza.getDesplazamientoColumna(parte) + movimientoColumna;
 
-                    if (nf < 0 || nc < 0 || nf >= numeroFilas || nc >= numeroColumnas) {
+                    if (numeroFila < 0 || numeroColumna < 0 || numeroFila >= numeroFilas || numeroColumna >= numeroColumnas) {
                         dentro = false;
                         continue;
                     }
 
-                    int ocupante = estado.get(nf, nc);
+                    int ocupante = estado.get(numeroFila, numeroColumna);
 
                     if (ocupante != 0 && ocupante != pieza.id()) {
                         libre = false;
@@ -222,10 +222,10 @@ public class SolucionadorTablero {
                 int extremo;
 
                 for (int parte : cara) {
-                    int f = origen[0] + pieza.getDesplazamientoFila(parte);
-                    int c = origen[1] + pieza.getDesplazamientoColumna(parte);
+                    int fila = origen[0] + pieza.getDesplazamientoFila(parte);
+                    int columna = origen[1] + pieza.getDesplazamientoColumna(parte);
 
-                    int posicion = lado == LadoSalida.ARRIBA || lado == LadoSalida.ABAJO ? c : f;
+                    int posicion = lado == LadoSalida.ARRIBA || lado == LadoSalida.ABAJO ? columna : fila;
                     minimo = Math.min(minimo, posicion);
                 }
 

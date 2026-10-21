@@ -24,9 +24,4 @@ public enum Ficha {
     public char getSimbolo() { return simbolo; }
 
     public String getColorANSI() { return colorANSI; }
-
-    public String getBloqueColor() {
-        if (this == VACIA) return "   ";
-        return colorANSI + "   " + "\u001B[0m";
-    }
 }

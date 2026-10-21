@@ -32,8 +32,6 @@ public class SolucionadorTablero {
         this.maximoEstados = casillas <= 25 ? 150000 : casillas <= 49 ? 200000 : 500000;
     }
 
-    public double getPeso() { return peso; }
-
     public int getNodosExplorados() { return nodosExplorados; }
 
     public int getNodosGenerados() { return nodosGenerados; }
@@ -109,7 +107,7 @@ public class SolucionadorTablero {
         List<Paso> pasos = new ArrayList<>();
 
         for (Pieza pieza : piezas) {
-            int[] origen = estado.buscarOrigen(pieza.getId());
+            int[] origen = estado.buscarOrigen(pieza.id());
             if (origen == null) continue;
 
             int fila = origen[0];
@@ -133,7 +131,7 @@ public class SolucionadorTablero {
 
                     int ocupante = estado.get(nf, nc);
 
-                    if (ocupante != 0 && ocupante != pieza.getId()) {
+                    if (ocupante != 0 && ocupante != pieza.id()) {
                         libre = false;
                         break;
                     }
@@ -156,7 +154,7 @@ public class SolucionadorTablero {
 
         if (!pieza.permiteSalida(lado)) return false;
 
-        int[] cara = pieza.getForma().getIndicesCara(lado);
+        int[] cara = pieza.forma().getIndicesCara(lado);
         int tamanoSalida = cara.length;
 
         int extremo = Integer.MIN_VALUE;
@@ -164,49 +162,36 @@ public class SolucionadorTablero {
         int maximo = Integer.MIN_VALUE;
 
         for (int parte : cara) {
-            int f = fila + pieza.getDesplazamientoFila(parte);
-            int c = columna + pieza.getDesplazamientoColumna(parte);
+            int filas = fila + pieza.getDesplazamientoFila(parte);
+            int columas = columna + pieza.getDesplazamientoColumna(parte);
 
-            int posicion = lado == LadoSalida.ARRIBA || lado == LadoSalida.ABAJO ? c : f;
+            int posicion = lado == LadoSalida.ARRIBA || lado == LadoSalida.ABAJO ? columas : filas;
 
             minimo = Math.min(minimo, posicion);
             maximo = Math.max(maximo, posicion);
 
-            switch (lado) {
-                case ARRIBA:
-                    extremo = f;
-                    break;
-                case ABAJO:
-                    extremo = f;
-                    break;
-                case IZQUIERDA:
-                    extremo = c;
-                    break;
-                case DERECHA:
-                    extremo = c;
-                    break;
-            }
+            extremo = switch (lado) {
+                case ARRIBA, ABAJO -> filas;
+                case IZQUIERDA, DERECHA -> columas;
+            };
         }
 
-        boolean tocaBorde;
-
-        switch (lado) {
-            case ARRIBA: tocaBorde = extremo == 0; break;
-            case ABAJO: tocaBorde = extremo == numeroFilas - 1; break;
-            case IZQUIERDA: tocaBorde = extremo == 0; break;
-            default: tocaBorde = extremo == numeroColumnas - 1;
-        }
+        boolean tocaBorde = switch (lado) {
+            case ARRIBA, IZQUIERDA -> extremo == 0;
+            case ABAJO -> extremo == numeroFilas - 1;
+            default -> extremo == numeroColumnas - 1;
+        };
 
         if (!tocaBorde) return false;
 
         for (Salida salida : salidas) {
-            if (salida.getColorFicha() != pieza.getColor()) continue;
-            if (salida.getLadoSalida() != lado) continue;
-            if (salida.getTamano() != tamanoSalida) continue;
+            if (salida.colorFicha() != pieza.color()) continue;
+            if (salida.ladoSalida() != lado) continue;
+            if (salida.tamano() != tamanoSalida) continue;
 
             if (maximo != minimo + tamanoSalida - 1) continue;
 
-            if (minimo == salida.getIndice())
+            if (minimo == salida.indice())
                 return true;
         }
 
@@ -217,22 +202,22 @@ public class SolucionadorTablero {
         int total = 0;
 
         for (Pieza pieza : piezas) {
-            int[] origen = estado.buscarOrigen(pieza.getId());
+            int[] origen = estado.buscarOrigen(pieza.id());
             if (origen == null) continue;
 
             int mejor = Integer.MAX_VALUE;
 
             for (Salida salida : salidas) {
-                LadoSalida lado = salida.getLadoSalida();
+                LadoSalida lado = salida.ladoSalida();
 
-                if (salida.getColorFicha() != pieza.getColor()) continue;
+                if (salida.colorFicha() != pieza.color()) continue;
                 if (!pieza.permiteSalida(lado)) continue;
-                if (salida.getTamano() != pieza.getForma().getTamanoSalida(lado)) continue;
+                if (salida.tamano() != pieza.forma().getTamanoSalida(lado)) continue;
 
-                int[] cara = pieza.getForma().getIndicesCara(lado);
+                int[] cara = pieza.forma().getIndicesCara(lado);
 
                 int minimo = Integer.MAX_VALUE;
-                int extremo = 0;
+                int extremo;
 
                 for (int parte : cara) {
                     int f = origen[0] + pieza.getDesplazamientoFila(parte);
@@ -264,23 +249,20 @@ public class SolucionadorTablero {
                             extremo = Math.max(extremo, origen[1] + pieza.getDesplazamientoColumna(parte));
                 }
 
-                int distanciaBorde;
-
-                switch (lado) {
-                    case ARRIBA: distanciaBorde = extremo; break;
-                    case ABAJO: distanciaBorde = numeroFilas - 1 - extremo; break;
-                    case IZQUIERDA: distanciaBorde = extremo; break;
-                    default: distanciaBorde = numeroColumnas - 1 - extremo;
-                }
+                int distanciaBorde = switch (lado) {
+                    case ARRIBA, IZQUIERDA -> extremo;
+                    case ABAJO -> numeroFilas - 1 - extremo;
+                    default -> numeroColumnas - 1 - extremo;
+                };
 
                 int distancia = distanciaBorde
-                        + Math.abs(minimo - salida.getIndice()) + 1;
+                        + Math.abs(minimo - salida.indice()) + 1;
 
                 mejor = Math.min(mejor, distancia);
             }
 
             if (mejor == Integer.MAX_VALUE)
-                throw new IllegalStateException("Pieza sin salida compatible: " + pieza.getColor());
+                throw new IllegalStateException("Pieza sin salida compatible: " + pieza.color());
 
             total += mejor;
         }

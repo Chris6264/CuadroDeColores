@@ -25,7 +25,7 @@ public class ImpresorTablero {
 
     private Ficha color(int fila, int columna) {
         int id = estado.get(fila, columna);
-        return id == 0 ? Ficha.VACIA : piezas.get(id - 1).getColor();
+        return id == 0 ? Ficha.VACIA : piezas.get(id - 1).color();
     }
 
     private boolean mismaPieza(int fila1, int columna1, int fila2, int columna2) {
@@ -41,7 +41,7 @@ public class ImpresorTablero {
     private String salida(LadoSalida lado, int indice, int ancho) {
         for (Salida salida : salidas)
             if (salida.ocupaPosicion(lado, indice))
-                return bloque(salida.getColorFicha(), ancho);
+                return bloque(salida.colorFicha(), ancho);
 
         return " ".repeat(ancho);
     }
@@ -103,8 +103,7 @@ public class ImpresorTablero {
     private void imprimirLineaInferior(StringBuilder sb) {
         sb.append("  +");
 
-        for (int columna = 0; columna < columnas; columna++)
-            sb.append("---+");
+        sb.repeat("---+", Math.max(0, columnas));
 
         sb.append("\n   ");
 

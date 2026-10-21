@@ -19,11 +19,11 @@ public enum Movimiento {
     public int getMovimientoColumna() { return movimientoColumna; }
 
     public LadoSalida getLadoSalida() {
-        switch (this) {
-            case ARRIBA: return LadoSalida.ARRIBA;
-            case ABAJO: return LadoSalida.ABAJO;
-            case IZQUIERDA: return LadoSalida.IZQUIERDA;
-            default: return LadoSalida.DERECHA;
-        }
+        return switch (this) {
+            case ARRIBA -> LadoSalida.ARRIBA;
+            case ABAJO -> LadoSalida.ABAJO;
+            case IZQUIERDA -> LadoSalida.IZQUIERDA;
+            default -> LadoSalida.DERECHA;
+        };
     }
 }

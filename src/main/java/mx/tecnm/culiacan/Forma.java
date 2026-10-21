@@ -23,9 +23,7 @@ public enum Forma {
     Forma(int[][] posiciones) {
         this.posiciones = posiciones;
         this.caras = new int[LadoSalida.values().length][];
-
-        for (LadoSalida lado : LadoSalida.values())
-            caras[lado.ordinal()] = calcularIndicesCara(lado);
+        for (LadoSalida lado : LadoSalida.values()) caras[lado.ordinal()] = calcularIndicesCara(lado);
     }
 
     public int getTamano() { return posiciones.length; }
@@ -33,10 +31,6 @@ public enum Forma {
     public int getFila(int parte) { return posiciones[parte][0]; }
 
     public int getColumna(int parte) { return posiciones[parte][1]; }
-
-    public boolean esL() {
-        return esLCorta() || esLLarga();
-    }
 
     public boolean esLCorta() {
         return this == L1 || this == L2 || this == L3 || this == L4;

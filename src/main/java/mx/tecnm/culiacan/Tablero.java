@@ -27,8 +27,6 @@ public class Tablero implements TableroJuego{
         estadoActual = estadoInicial;
     }
 
-    public int getNumeroDeLados() { return numeroDeLados; }
-
     @Override
     public int getNumeroFilas() { return numeroDeLados; }
 
@@ -40,8 +38,6 @@ public class Tablero implements TableroJuego{
     public List<Pieza> getPiezas() { return piezas; }
 
     public Estado getEstadoInicial() { return estadoInicial; }
-
-    public Estado getEstadoActual() { return estadoActual; }
 
     public void realizarMovimiento(Paso paso) {
         estadoActual = estadoActual.realizarMovimiento(paso);
@@ -163,16 +159,16 @@ public class Tablero implements TableroJuego{
                     if (tablero[fila][columna] != id) continue;
 
                     for (Movimiento movimiento : Movimiento.values()) {
-                        int nf = fila + movimiento.getMovimientoFila();
-                        int nc = columna + movimiento.getMovimientoColumna();
+                        int numeroFila = fila + movimiento.getMovimientoFila();
+                        int numeroColumna = columna + movimiento.getMovimientoColumna();
 
-                        if (nf < 0 || nc < 0 || nf >= numeroDeLados || nc >= numeroDeLados) continue;
+                        if (numeroFila < 0 || numeroColumna < 0 || numeroFila >= numeroDeLados || numeroColumna >= numeroDeLados) continue;
 
-                        int vecino = tablero[nf][nc];
+                        int vecino = tablero[numeroFila][numeroColumna];
 
                         if (vecino == 0 || vecino == id || vecino > piezas.size()) continue;
 
-                        coloresVecinos.add(piezas.get(vecino - 1).getColor());
+                        coloresVecinos.add(piezas.get(vecino - 1).color());
                     }
                 }
             }
@@ -196,9 +192,9 @@ public class Tablero implements TableroJuego{
         salidas.clear();
 
         List<Ficha> colores = piezas.stream()
-                .map(Pieza::getColor)
+                .map(Pieza::color)
                 .distinct()
-                .collect(Collectors.toList());
+                .toList();
 
         List<int[]> espacios = obtenerEspaciosSalida();
         Collections.shuffle(espacios, random);
@@ -220,14 +216,14 @@ public class Tablero implements TableroJuego{
             int columna = salida.getColumna(numeroDeLados);
             int id = tablero[fila][columna];
 
-            if (piezas.get(id - 1).getColor() == salida.getColorFicha()) {
+            if (piezas.get(id - 1).color() == salida.colorFicha()) {
                 coincidencia = true;
                 break;
             }
         }
 
         if (!coincidencia) {
-            Salida salida = salidas.get(0);
+            Salida salida = salidas.getFirst();
             int fila = salida.getFila(numeroDeLados);
             int columna = salida.getColumna(numeroDeLados);
 
@@ -235,7 +231,7 @@ public class Tablero implements TableroJuego{
                 for (int j = 0; j < numeroDeLados; j++) {
                     int id = tablero[i][j];
 
-                    if (piezas.get(id - 1).getColor() == salida.getColorFicha()) {
+                    if (piezas.get(id - 1).color() == salida.colorFicha()) {
                         int temporal = tablero[fila][columna];
                         tablero[fila][columna] = tablero[i][j];
                         tablero[i][j] = temporal;
@@ -253,7 +249,7 @@ public class Tablero implements TableroJuego{
 
         for (Pieza pieza : piezas) {
             Orientacion anterior = orientaciones.putIfAbsent(
-                    pieza.getColor(),
+                    pieza.color(),
                     pieza.getOrientacion()
             );
 
@@ -264,17 +260,17 @@ public class Tablero implements TableroJuego{
         List<Ficha> colores = new ArrayList<>(orientaciones.keySet());
         Set<String> espaciosOcupados = new HashSet<>();
 
-        Pieza primera = piezas.get(0);
+        Pieza primera = piezas.getFirst();
 
         Salida inicial = new Salida(
                 LadoSalida.IZQUIERDA,
                 0,
-                primera.getColor()
+                primera.color()
         );
 
         salidas.add(inicial);
         espaciosOcupados.add("IZQUIERDA-0");
-        colores.remove(primera.getColor());
+        colores.remove(primera.color());
 
         for (Ficha color : colores) {
             Orientacion orientacion = orientaciones.get(color);
@@ -297,7 +293,7 @@ public class Tablero implements TableroJuego{
             Salida salida = candidatas.get(random.nextInt(candidatas.size()));
 
             salidas.add(salida);
-            espaciosOcupados.add(salida.getLadoSalida() + "-" + salida.getIndice());
+            espaciosOcupados.add(salida.ladoSalida() + "-" + salida.indice());
         }
     }
 
@@ -327,29 +323,12 @@ public class Tablero implements TableroJuego{
                     throw new IllegalStateException("El tablero contiene espacios vacíos");
 
         long colores = piezas.stream()
-                .map(Pieza::getColor)
+                .map(Pieza::color)
                 .distinct()
                 .count();
 
         if (colores < 3 || colores > 10)
             throw new IllegalStateException("Cantidad de colores incorrecta");
-    }
-
-    private char simboloSalida(LadoSalida lado, int indice) {
-        for (Salida salida : salidas)
-            if (salida.getLadoSalida() == lado && salida.getIndice() == indice)
-                return salida.getColorFicha().getSimbolo();
-
-        return ' ';
-    }
-
-    private String colorSalida(LadoSalida lado, int indice) {
-        for (Salida salida : salidas) {
-            if (salida.ocupaPosicion(lado, indice))
-                return salida.getColorFicha().getBloqueColor();
-        }
-
-        return "   ";
     }
 
     @Override

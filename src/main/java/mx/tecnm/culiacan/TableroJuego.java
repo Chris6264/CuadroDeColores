@@ -8,6 +8,5 @@ public interface TableroJuego {
     List<Salida> getSalidas();
     List<Pieza> getPiezas();
     Estado getEstadoInicial();
-    Estado getEstadoActual();
     void realizarMovimiento(Paso paso);
 }

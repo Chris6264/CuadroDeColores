@@ -29,19 +29,14 @@ public class CuadroDeColores {
         TableroJuego tablero = null;
         List<Paso> solucion = null;
 
-        int maximoIntentos = version == Version.AVANZADA ? 100 : 30;
+        int maximoIntentos = 100;
         int sinSolucion = 0;
         int limiteAlcanzado = 0;
         int erroresGeneracion = 0;
 
         for (int intento = 1; intento <= maximoIntentos && solucion == null; intento++) {
             try {
-                if (version == Version.BASICA)
-                    tablero = new Tablero(reglas);
-                else if (version == Version.INTERMEDIA)
-                    tablero = new Tablero(filas, reglas);
-                else
-                    tablero = new TableroAvanzado(filas, columnas, reglas);
+                tablero = crearTablero(filas,columnas);
 
                 SolucionadorTablero solucionador = new SolucionadorTablero(
                         tablero.getSalidas(),
@@ -56,11 +51,7 @@ public class CuadroDeColores {
 
                 double tiempo = (System.nanoTime() - inicio) / 1_000_000_000.0;
 
-                System.out.println("\nIntento " + intento);
-                System.out.println("Resultado: " + solucionador.getResultadoBusqueda());
-                System.out.println("Nodos explorados: " + solucionador.getNodosExplorados());
-                System.out.println("Nodos generados: " + solucionador.getNodosGenerados());
-                System.out.printf("Tiempo: %.3f segundos%n", tiempo);
+               vista.mostrarInformacionIntento(intento,solucionador,tiempo);
 
                 if (solucionador.getResultadoBusqueda() == ResultadoBusqueda.SIN_SOLUCION)
                     sinSolucion++;
@@ -71,28 +62,22 @@ public class CuadroDeColores {
             } catch (IllegalStateException e) {
             erroresGeneracion++;
             solucion = null;
-            System.out.println("\nIntento " + intento + ": " + e.getMessage());
-
+            vista.mostrarIntentoFallido(intento, e);
         } catch (IndexOutOfBoundsException e) {
             erroresGeneracion++;
             solucion = null;
-            System.out.println("\nError de indices en intento " + intento);
-            e.printStackTrace();
-        }
+            vista.mostrarErrorIndices(intento);
+            }
         }
 
         if (solucion == null) {
-            System.out.println("\nNo se encontró una solución.");
-            System.out.println("Tableros sin solución comprobada: " + sinSolucion);
-            System.out.println("Búsquedas detenidas por límite: " + limiteAlcanzado);
-            System.out.println("Errores de generación o validación: " + erroresGeneracion);
+            vista.mostrarSinSolucion(sinSolucion,limiteAlcanzado,erroresGeneracion);
             return;
         }
 
         vista.mostrarTablero(tablero);
 
-        System.out.println("Algoritmo utilizado: "
-                + (filas * columnas <= 25 ? "A*" : "A* ponderado"));
+        vista.mostrarAlgoritmoUsado(filas,columnas);
 
         vista.mostrarCantidadMovimientos(solucion.size());
 
@@ -110,6 +95,17 @@ public class CuadroDeColores {
         }
 
         vista.mostrarHistorialMovimientos(historialDeMovimientos);
+    }
+
+    private TableroJuego crearTablero(int filas, int columnas){
+        TableroJuego tablero;
+        if (version == Version.BASICA)
+            tablero = new Tablero(reglas);
+        else if (version == Version.INTERMEDIA)
+            tablero = new Tablero(filas, reglas);
+        else
+            tablero = new TableroAvanzado(filas, columnas, reglas);
+        return tablero;
     }
 
     private int pedirDimension() {

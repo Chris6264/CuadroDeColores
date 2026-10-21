@@ -18,8 +18,7 @@ public class Estado {
             for (int columna = 0; columna < numeroColumnas; columna++) {
                 int id = origen[fila][columna];
 
-                if (id < 0 || id > 255)
-                    throw new IllegalArgumentException("Identificador de pieza fuera de rango");
+                if (id < 0 || id > 255) throw new IllegalArgumentException("Identificador de pieza fuera de rango");
 
                 celdas[indice(fila, columna)] = (byte) id;
             }
@@ -39,8 +38,6 @@ public class Estado {
         return fila * numeroColumnas + columna;
     }
 
-    public int getTamano() { return numeroFilas; }
-
     public int getNumeroFilas() { return numeroFilas; }
 
     public int getNumeroColumnas() { return numeroColumnas; }
@@ -52,10 +49,13 @@ public class Estado {
     public String getClave() { return clave; }
 
     public boolean estaResuelto() {
+        boolean resuelto = true;
         for (byte celda : celdas)
-            if (celda != 0) return false;
-
-        return true;
+            if (celda != 0) {
+                resuelto = false;
+                break;
+            }
+        return resuelto;
     }
 
     public int[] buscarOrigen(int id) {
@@ -79,26 +79,26 @@ public class Estado {
     public Estado realizarMovimiento(Paso paso) {
         byte[] copia = celdas.clone();
 
-        Pieza pieza = paso.getPieza();
-        int fila = paso.getFila();
-        int columna = paso.getColumna();
+        Pieza pieza = paso.pieza();
+        int fila = paso.fila();
+        int columna = paso.columna();
 
         for (int parte = 0; parte < pieza.getTamano(); parte++) {
-            int f = fila + pieza.getDesplazamientoFila(parte);
-            int c = columna + pieza.getDesplazamientoColumna(parte);
+            int filas = fila + pieza.getDesplazamientoFila(parte);
+            int columnas = columna + pieza.getDesplazamientoColumna(parte);
 
-            copia[indice(f, c)] = 0;
+            copia[indice(filas, columnas)] = 0;
         }
 
         if (!paso.fichaSale()) {
-            int nuevaFila = fila + paso.getMovimiento().getMovimientoFila();
-            int nuevaColumna = columna + paso.getMovimiento().getMovimientoColumna();
+            int nuevaFila = fila + paso.movimiento().getMovimientoFila();
+            int nuevaColumna = columna + paso.movimiento().getMovimientoColumna();
 
             for (int parte = 0; parte < pieza.getTamano(); parte++) {
-                int f = nuevaFila + pieza.getDesplazamientoFila(parte);
-                int c = nuevaColumna + pieza.getDesplazamientoColumna(parte);
+                int filas = nuevaFila + pieza.getDesplazamientoFila(parte);
+                int columnas = nuevaColumna + pieza.getDesplazamientoColumna(parte);
 
-                copia[indice(f, c)] = (byte) pieza.getId();
+                copia[indice(filas, columnas)] = (byte) pieza.id();
             }
         }
 

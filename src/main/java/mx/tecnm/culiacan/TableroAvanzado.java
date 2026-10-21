@@ -9,7 +9,7 @@ public class TableroAvanzado implements TableroJuego {
     private final List<Pieza> piezas = new ArrayList<>();
     private final List<Salida> salidas = new ArrayList<>();
     private final Random random = new Random();
-    private Estado estadoInicial;
+    private final Estado estadoInicial;
     private Estado estadoActual;
 
     public TableroAvanzado(int numeroFilas, int numeroColumnas, Reglas reglas) {
@@ -56,9 +56,6 @@ public class TableroAvanzado implements TableroJuego {
 
     @Override
     public Estado getEstadoInicial() { return estadoInicial; }
-
-    @Override
-    public Estado getEstadoActual() { return estadoActual; }
 
     @Override
     public void realizarMovimiento(Paso paso) {
@@ -109,7 +106,7 @@ public class TableroAvanzado implements TableroJuego {
 
             Collections.shuffle(disponibles, random);
 
-            Forma forma = disponibles.get(0);
+            Forma forma = disponibles.getFirst();
 
             if (random.nextDouble() < 0.20)
                 forma = Forma.INDIVIDUAL;
@@ -224,32 +221,7 @@ public class TableroAvanzado implements TableroJuego {
         Arrays.fill(gruposColor, -1);
 
         for (int paso = 0; paso < cantidad; paso++) {
-            int seleccionado = -1;
-            int mayorSaturacion = -1;
-            int mayorGrado = -1;
-
-            for (int i = 0; i < cantidad; i++) {
-                if (asignados[i] != -1) continue;
-
-                Set<Integer> coloresVecinos = new HashSet<>();
-
-                for (int vecino : vecinos.get(i))
-                    if (asignados[vecino] != -1)
-                        coloresVecinos.add(asignados[vecino]);
-
-                int saturacion = coloresVecinos.size();
-                int grado = vecinos.get(i).size();
-
-                if (saturacion > mayorSaturacion
-                        || (saturacion == mayorSaturacion && grado > mayorGrado)) {
-                    seleccionado = i;
-                    mayorSaturacion = saturacion;
-                    mayorGrado = grado;
-                }
-            }
-
-            if (seleccionado == -1)
-                throw new IllegalStateException("No se pudo seleccionar una pieza para colorear");
+            int seleccionado = getSeleccionado(cantidad, asignados, vecinos);
 
             int grupoActual = grupo(formas.get(seleccionado));
             Set<Integer> prohibidos = new HashSet<>();
@@ -293,29 +265,34 @@ public class TableroAvanzado implements TableroJuego {
         }
     }
 
-    private Set<Ficha> obtenerColoresVecinos(int id) {
-        Set<Ficha> vecinos = new HashSet<>();
+    private static int getSeleccionado(int cantidad, int[] asignados, List<Set<Integer>> vecinos) {
+        int seleccionado = -1;
+        int mayorSaturacion = -1;
+        int mayorGrado = -1;
 
-        for (int fila = 0; fila < numeroFilas; fila++) {
-            for (int columna = 0; columna < numeroColumnas; columna++) {
-                if (tablero[fila][columna] != id) continue;
+        for (int i = 0; i < cantidad; i++) {
+            if (asignados[i] != -1) continue;
 
-                for (Movimiento movimiento : Movimiento.values()) {
-                    int nf = fila + movimiento.getMovimientoFila();
-                    int nc = columna + movimiento.getMovimientoColumna();
+            Set<Integer> coloresVecinos = new HashSet<>();
 
-                    if (nf < 0 || nc < 0 || nf >= numeroFilas || nc >= numeroColumnas)
-                        continue;
+            for (int vecino : vecinos.get(i))
+                if (asignados[vecino] != -1)
+                    coloresVecinos.add(asignados[vecino]);
 
-                    int vecino = tablero[nf][nc];
+            int saturacion = coloresVecinos.size();
+            int grado = vecinos.get(i).size();
 
-                    if (vecino > 0 && vecino != id && vecino <= piezas.size())
-                        vecinos.add(piezas.get(vecino - 1).getColor());
-                }
+            if (saturacion > mayorSaturacion
+                    || (saturacion == mayorSaturacion && grado > mayorGrado)) {
+                seleccionado = i;
+                mayorSaturacion = saturacion;
+                mayorGrado = grado;
             }
         }
 
-        return vecinos;
+        if (seleccionado == -1)
+            throw new IllegalStateException("No se pudo seleccionar una pieza para colorear");
+        return seleccionado;
     }
 
     private void colocarSalidas() {
@@ -324,21 +301,21 @@ public class TableroAvanzado implements TableroJuego {
         Map<Ficha, List<Pieza>> piezasPorColor = new LinkedHashMap<>();
 
         for (Pieza pieza : piezas)
-            piezasPorColor.computeIfAbsent(pieza.getColor(), k -> new ArrayList<>()).add(pieza);
+            piezasPorColor.computeIfAbsent(pieza.color(), _ -> new ArrayList<>()).add(pieza);
 
         Set<String> ocupadas = new HashSet<>();
 
-        Pieza inicial = piezas.get(0);
-        Salida primera = new Salida(LadoSalida.ARRIBA, 0, inicial.getColor(), 1);
+        Pieza inicial = piezas.getFirst();
+        Salida primera = new Salida(LadoSalida.ARRIBA, 0, inicial.color(), 1);
 
         salidas.add(primera);
         ocupadas.add("ARRIBA-0");
-        piezasPorColor.remove(inicial.getColor());
+        piezasPorColor.remove(inicial.color());
 
         for (Map.Entry<Ficha, List<Pieza>> entry : piezasPorColor.entrySet()) {
             Ficha color = entry.getKey();
             List<Pieza> grupo = entry.getValue();
-            Pieza representante = grupo.get(0);
+            Pieza representante = grupo.getFirst();
 
             List<Salida> candidatas = new ArrayList<>();
             List<Salida> alineadas = new ArrayList<>();
@@ -346,7 +323,7 @@ public class TableroAvanzado implements TableroJuego {
             for (LadoSalida lado : LadoSalida.values()) {
                 if (!representante.permiteSalida(lado)) continue;
 
-                int tamanoSalida = representante.getForma().getTamanoSalida(lado);
+                int tamanoSalida = representante.forma().getTamanoSalida(lado);
 
                 int limite = lado == LadoSalida.ARRIBA || lado == LadoSalida.ABAJO
                         ? numeroColumnas : numeroFilas;
@@ -374,28 +351,28 @@ public class TableroAvanzado implements TableroJuego {
 
             salidas.add(elegida);
 
-            for (int i = 0; i < elegida.getTamano(); i++)
-                ocupadas.add(elegida.getLadoSalida() + "-" + (elegida.getIndice() + i));
+            for (int i = 0; i < elegida.tamano(); i++)
+                ocupadas.add(elegida.ladoSalida() + "-" + (elegida.indice() + i));
         }
     }
 
     private boolean estaAlineada(Pieza pieza, Salida salida) {
-        if (!pieza.permiteSalida(salida.getLadoSalida())) return false;
+        if (!pieza.permiteSalida(salida.ladoSalida())) return false;
 
-        int[] origen = buscarOrigen(pieza.getId());
+        int[] origen = buscarOrigen(pieza.id());
         if (origen == null) return false;
 
-        int[] cara = pieza.getForma().getIndicesCara(salida.getLadoSalida());
+        int[] cara = pieza.forma().getIndicesCara(salida.ladoSalida());
         int[] indices = new int[cara.length];
 
-        if (cara.length != salida.getTamano()) return false;
+        if (cara.length != salida.tamano()) return false;
 
         for (int i = 0; i < cara.length; i++) {
             int parte = cara[i];
             int f = origen[0] + pieza.getDesplazamientoFila(parte);
             int c = origen[1] + pieza.getDesplazamientoColumna(parte);
 
-            switch (salida.getLadoSalida()) {
+            switch (salida.ladoSalida()) {
                 case ARRIBA:
                     if (f != 0) return false;
                     indices[i] = c;
@@ -418,7 +395,7 @@ public class TableroAvanzado implements TableroJuego {
         Arrays.sort(indices);
 
         for (int i = 0; i < indices.length; i++)
-            if (indices[i] != salida.getIndice() + i) return false;
+            if (indices[i] != salida.indice() + i) return false;
 
         return true;
     }
@@ -443,10 +420,10 @@ public class TableroAvanzado implements TableroJuego {
 
     private boolean salidaOcupada(LadoSalida lado, int indice, int tamano) {
         for (Salida salida : salidas) {
-            if (salida.getLadoSalida() != lado) continue;
+            if (salida.ladoSalida() != lado) continue;
 
-            if (indice < salida.getIndice() + salida.getTamano()
-                    && salida.getIndice() < indice + tamano)
+            if (indice < salida.indice() + salida.tamano()
+                    && salida.indice() < indice + tamano)
                 return true;
         }
 
@@ -460,29 +437,12 @@ public class TableroAvanzado implements TableroJuego {
                     throw new IllegalStateException("El tablero contiene casillas vacías");
 
         long cantidadColores = piezas.stream()
-                .map(Pieza::getColor)
+                .map(Pieza::color)
                 .distinct()
                 .count();
 
         if (cantidadColores < 3 || cantidadColores > 10)
             throw new IllegalStateException("Cantidad de colores incorrecta");
-    }
-
-    private char simboloSalida(LadoSalida lado, int indice) {
-        for (Salida salida : salidas)
-            if (salida.ocupaPosicion(lado, indice))
-                return salida.getColorFicha().getSimbolo();
-
-        return ' ';
-    }
-
-    private String colorSalida(LadoSalida lado, int indice) {
-        for (Salida salida : salidas) {
-            if (salida.ocupaPosicion(lado, indice))
-                return salida.getColorFicha().getBloqueColor();
-        }
-
-        return "   ";
     }
 
     @Override

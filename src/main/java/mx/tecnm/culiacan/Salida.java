@@ -1,32 +1,13 @@
 package mx.tecnm.culiacan;
 
-public class Salida {
-    private final LadoSalida ladoSalida;
-    private final int indice;
-    private final Ficha colorFicha;
-    private final int tamano;
-
+public record Salida(LadoSalida ladoSalida, int indice, Ficha colorFicha, int tamano) {
     public Salida(LadoSalida ladoSalida, int indice, Ficha colorFicha) {
         this(ladoSalida, indice, colorFicha, 1);
     }
 
-    public Salida(LadoSalida ladoSalida, int indice, Ficha colorFicha, int tamano) {
-        if (tamano < 1 || tamano > 2)
-            throw new IllegalArgumentException("Tamano de salida incorrecto");
-
-        this.ladoSalida = ladoSalida;
-        this.indice = indice;
-        this.colorFicha = colorFicha;
-        this.tamano = tamano;
+    public Salida {
+        if (tamano < 1 || tamano > 2) throw new IllegalArgumentException("Tamano de salida incorrecto");
     }
-
-    public LadoSalida getLadoSalida() { return ladoSalida; }
-
-    public int getIndice() { return indice; }
-
-    public Ficha getColorFicha() { return colorFicha; }
-
-    public int getTamano() { return tamano; }
 
     public boolean ocupaPosicion(LadoSalida lado, int posicion) {
         return ladoSalida == lado
@@ -35,18 +16,18 @@ public class Salida {
     }
 
     public int getFila(int numeroFilas) {
-        switch (ladoSalida) {
-            case ARRIBA: return 0;
-            case ABAJO: return numeroFilas - 1;
-            default: return indice;
-        }
+        return switch (ladoSalida) {
+            case ARRIBA -> 0;
+            case ABAJO -> numeroFilas - 1;
+            default -> indice;
+        };
     }
 
     public int getColumna(int numeroColumnas) {
-        switch (ladoSalida) {
-            case IZQUIERDA: return 0;
-            case DERECHA: return numeroColumnas - 1;
-            default: return indice;
-        }
+        return switch (ladoSalida) {
+            case IZQUIERDA -> 0;
+            case DERECHA -> numeroColumnas - 1;
+            default -> indice;
+        };
     }
 }

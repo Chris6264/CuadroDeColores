@@ -38,4 +38,32 @@ public class Vista {
         System.out.println("Historial de movimientos:");
         historialDeMovimientos.forEach(System.out::println);
     }
+
+    public void mostrarInformacionIntento(int intento,SolucionadorTablero solucionador,double tiempo){
+        System.out.println("\nIntento " + intento);
+        System.out.println("Resultado: " + solucionador.getResultadoBusqueda());
+        System.out.println("Nodos explorados: " + solucionador.getNodosExplorados());
+        System.out.println("Nodos generados: " + solucionador.getNodosGenerados());
+        System.out.printf("Tiempo: %.3f segundos%n", tiempo);
+    }
+
+    public void mostrarIntentoFallido(int intento, IllegalStateException e){
+        System.out.println("\nIntento " + intento + ": " + e.getMessage());
+    }
+
+    public void mostrarErrorIndices(int intento){
+        System.out.println("\nError de indices en intento " + intento);
+    }
+
+    public void mostrarSinSolucion(int sinSolucion,int limiteAlcanzado,int erroresGeneracion){
+        System.out.println("\nNo se encontró una solución.");
+        System.out.println("Tableros sin solución comprobada: " + sinSolucion);
+        System.out.println("Búsquedas detenidas por límite: " + limiteAlcanzado);
+        System.out.println("Errores de generación o validación: " + erroresGeneracion);
+    }
+
+    public void mostrarAlgoritmoUsado(int filas, int columnas){
+        System.out.println("Algoritmo utilizado: "
+                + (filas * columnas <= 25 ? "A*" : "A* ponderado"));
+    }
 }

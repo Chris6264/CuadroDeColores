@@ -42,7 +42,8 @@ public class CuadroDeColores {
                         tablero.getSalidas(),
                         tablero.getNumeroFilas(),
                         tablero.getNumeroColumnas(),
-                        tablero.getPiezas()
+                        tablero.getPiezas(),
+                        reglas
                 );
 
                 long inicio = System.nanoTime();
@@ -59,7 +60,7 @@ public class CuadroDeColores {
                 if (solucionador.getResultadoBusqueda() == ResultadoBusqueda.LIMITE_ALCANZADO)
                     limiteAlcanzado++;
 
-            } catch (IllegalStateException e) {
+            } catch (ReglasException e) {
             erroresGeneracion++;
             solucion = null;
             vista.mostrarIntentoFallido(intento, e);

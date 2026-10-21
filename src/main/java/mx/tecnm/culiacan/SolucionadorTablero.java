@@ -10,16 +10,18 @@ public class SolucionadorTablero {
     private final double peso;
     private final int maximoNodos;
     private final int maximoEstados;
+    private final Reglas reglas;
 
     private int nodosExplorados;
     private int nodosGenerados;
     private ResultadoBusqueda resultadoBusqueda;
 
-    public SolucionadorTablero(List<Salida> salidas, int numeroDeLados, List<Pieza> piezas) {
-        this(salidas, numeroDeLados, numeroDeLados, piezas);
+    public SolucionadorTablero(List<Salida> salidas, int numeroDeLados, List<Pieza> piezas, Reglas reglas) {
+        this(salidas, numeroDeLados, numeroDeLados, piezas, reglas);
     }
 
-    public SolucionadorTablero(List<Salida> salidas, int numeroFilas, int numeroColumnas, List<Pieza> piezas) {
+    public SolucionadorTablero(List<Salida> salidas, int numeroFilas, int numeroColumnas, List<Pieza> piezas, Reglas reglas) {
+        this.reglas = reglas;
         this.salidas = salidas;
         this.piezas = piezas;
         this.numeroFilas = numeroFilas;
@@ -27,7 +29,7 @@ public class SolucionadorTablero {
 
         int casillas = numeroFilas * numeroColumnas;
 
-        this.peso = casillas <= 25 ? 1.0 : 1.5;
+        this.peso = casillas <= 25 ? 1.5 : 2.0;
         this.maximoNodos = casillas <= 25 ? 100000 : casillas <= 49 ? 150000 : 300000;
         this.maximoEstados = casillas <= 25 ? 150000 : casillas <= 49 ? 200000 : 500000;
     }
@@ -261,8 +263,7 @@ public class SolucionadorTablero {
                 mejor = Math.min(mejor, distancia);
             }
 
-            if (mejor == Integer.MAX_VALUE)
-                throw new IllegalStateException("Pieza sin salida compatible: " + pieza.color());
+            reglas.validarSalidaCompatible(mejor != Integer.MAX_VALUE, pieza.color());
 
             total += mejor;
         }

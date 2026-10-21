@@ -25,7 +25,7 @@ public class Nodo {
     public double getCostoTotal() { return costoTotal; }
 
     public List<Paso> reconstruirCamino() {
-        LinkedList<Paso> camino = new LinkedList<>();
+        List<Paso> camino = new LinkedList<>();
 
         for (Nodo nodo = this; nodo.padre != null; nodo = nodo.padre)
             camino.addFirst(nodo.paso);

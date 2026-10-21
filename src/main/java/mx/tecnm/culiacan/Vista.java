@@ -47,7 +47,7 @@ public class Vista {
         System.out.printf("Tiempo: %.3f segundos%n", tiempo);
     }
 
-    public void mostrarIntentoFallido(int intento, IllegalStateException e){
+    public void mostrarIntentoFallido(int intento, ReglasException e){
         System.out.println("\nIntento " + intento + ": " + e.getMessage());
     }
 

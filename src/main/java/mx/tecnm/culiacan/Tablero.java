@@ -4,6 +4,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 public class Tablero implements TableroJuego{
+    private final Reglas reglas;
     private final int[][] tablero;
     private final Estado estadoInicial;
     private Estado estadoActual;
@@ -18,12 +19,13 @@ public class Tablero implements TableroJuego{
 
     public Tablero(int numeroDeLados, Reglas reglas) {
         reglas.validarCampos(numeroDeLados);
+        this.reglas = reglas;
         this.numeroDeLados = numeroDeLados;
         this.tablero = new int[numeroDeLados][numeroDeLados];
 
         llenarTablero();
 
-        estadoInicial = new Estado(tablero);
+        estadoInicial = new Estado(tablero, reglas);
         estadoActual = estadoInicial;
     }
 
@@ -179,8 +181,7 @@ public class Tablero implements TableroJuego{
                 if (!coloresVecinos.contains(color))
                     disponibles.add(color);
 
-            if (disponibles.isEmpty())
-                throw new IllegalStateException("No hay colores disponibles para la pieza");
+            reglas.validarColorDisponible(!disponibles.isEmpty());
 
             Ficha color = disponibles.get(random.nextInt(disponibles.size()));
 
@@ -253,8 +254,7 @@ public class Tablero implements TableroJuego{
                     pieza.getOrientacion()
             );
 
-            if (anterior != null && anterior != pieza.getOrientacion())
-                throw new IllegalStateException("Color con orientaciones incompatibles");
+            reglas.validarOrientacionDelColor(anterior, pieza.getOrientacion());
         }
 
         List<Ficha> colores = new ArrayList<>(orientaciones.keySet());
@@ -287,8 +287,7 @@ public class Tablero implements TableroJuego{
                 }
             }
 
-            if (candidatas.isEmpty())
-                throw new IllegalStateException("No hay salida para el color " + color);
+            reglas.validarSalidaDisponible(!candidatas.isEmpty(), color);
 
             Salida salida = candidatas.get(random.nextInt(candidatas.size()));
 
@@ -317,18 +316,14 @@ public class Tablero implements TableroJuego{
     }
 
     private void validarTablero() {
-        for (int fila = 0; fila < numeroDeLados; fila++)
-            for (int columna = 0; columna < numeroDeLados; columna++)
-                if (tablero[fila][columna] == 0)
-                    throw new IllegalStateException("El tablero contiene espacios vacíos");
+        reglas.validarTableroCompleto(tablero);
 
         long colores = piezas.stream()
                 .map(Pieza::color)
                 .distinct()
                 .count();
 
-        if (colores < 3 || colores > 10)
-            throw new IllegalStateException("Cantidad de colores incorrecta");
+        reglas.validarCantidadColores(colores);
     }
 
     @Override

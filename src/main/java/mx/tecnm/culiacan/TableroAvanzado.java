@@ -3,6 +3,7 @@ package mx.tecnm.culiacan;
 import java.util.*;
 
 public class TableroAvanzado implements TableroJuego {
+    private final Reglas reglas;
     private final int numeroFilas;
     private final int numeroColumnas;
     private final int[][] tablero;
@@ -16,11 +17,13 @@ public class TableroAvanzado implements TableroJuego {
         reglas.validarCampos(numeroFilas);
         reglas.validarCampos(numeroColumnas);
 
+        this.reglas = reglas;
         this.numeroFilas = numeroFilas;
         this.numeroColumnas = numeroColumnas;
         this.tablero = new int[numeroFilas][numeroColumnas];
 
         boolean generado = false;
+        ReglasException ultimoError = null;
 
         for (int intento = 0; intento < 100 && !generado; intento++) {
             for (int[] fila : tablero)
@@ -32,13 +35,14 @@ public class TableroAvanzado implements TableroJuego {
             try {
                 llenarTablero();
                 generado = true;
-            } catch (IllegalStateException e) {
-                if (intento == 99)
-                    throw new IllegalStateException("No se pudo generar un tablero avanzado válido", e);
+            } catch (ReglasException e) {
+                ultimoError = e;
             }
         }
 
-        estadoInicial = new Estado(tablero);
+        reglas.validarTableroGenerado(generado, ultimoError);
+
+        estadoInicial = new Estado(tablero, reglas);
         estadoActual = estadoInicial;
     }
 
@@ -138,8 +142,7 @@ public class TableroAvanzado implements TableroJuego {
     }
 
     private void colocarFormaEn(int fila, int columna, Forma forma, List<Forma> formas) {
-        if (!puedeColocar(fila, columna, forma))
-            throw new IllegalStateException("No se puede colocar la pieza");
+        reglas.validarEspacioParaPieza(puedeColocar(fila, columna, forma));
 
         int id = formas.size() + 1;
 
@@ -160,8 +163,7 @@ public class TableroAvanzado implements TableroJuego {
                 if (puedeColocar(fila, columna, forma))
                     disponibles.add(new int[]{fila, columna});
 
-        if (disponibles.isEmpty())
-            throw new IllegalStateException("No hay espacio para " + forma);
+        reglas.validarEspacioParaForma(!disponibles.isEmpty(), forma);
 
         int[] posicion = disponibles.get(random.nextInt(disponibles.size()));
 
@@ -195,8 +197,7 @@ public class TableroAvanzado implements TableroJuego {
             for (int columna = 0; columna < numeroColumnas; columna++) {
                 int id = tablero[fila][columna] - 1;
 
-                if (id < 0 || id >= cantidad)
-                    throw new IllegalStateException("Identificador de pieza incorrecto");
+                reglas.validarIndicePieza(id, cantidad);
 
                 for (Movimiento movimiento : Movimiento.values()) {
                     int nf = fila + movimiento.getMovimientoFila();
@@ -206,8 +207,7 @@ public class TableroAvanzado implements TableroJuego {
 
                     int vecino = tablero[nf][nc] - 1;
 
-                    if (vecino < 0 || vecino >= cantidad)
-                        throw new IllegalStateException("Identificador vecino incorrecto");
+                    reglas.validarIndiceVecino(vecino, cantidad);
 
                     if (id != vecino) vecinos.get(id).add(vecino);
                 }
@@ -249,8 +249,7 @@ public class TableroAvanzado implements TableroJuego {
                 }
             }
 
-            if (elegido == -1)
-                throw new IllegalStateException("No hay colores compatibles para esta distribución");
+            reglas.validarColoresCompatibles(elegido != -1);
 
             asignados[seleccionado] = elegido;
         }
@@ -258,14 +257,13 @@ public class TableroAvanzado implements TableroJuego {
         piezas.clear();
 
         for (int i = 0; i < cantidad; i++) {
-            if (asignados[i] < 0 || asignados[i] >= colores.size())
-                throw new IllegalStateException("Color no asignado a la pieza " + (i + 1));
+            reglas.validarColorAsignado(asignados[i], colores.size(), i + 1);
 
             piezas.add(new Pieza(i + 1, colores.get(asignados[i]), formas.get(i)));
         }
     }
 
-    private static int getSeleccionado(int cantidad, int[] asignados, List<Set<Integer>> vecinos) {
+    private int getSeleccionado(int cantidad, int[] asignados, List<Set<Integer>> vecinos) {
         int seleccionado = -1;
         int mayorSaturacion = -1;
         int mayorGrado = -1;
@@ -290,8 +288,7 @@ public class TableroAvanzado implements TableroJuego {
             }
         }
 
-        if (seleccionado == -1)
-            throw new IllegalStateException("No se pudo seleccionar una pieza para colorear");
+        reglas.validarPiezaSeleccionada(seleccionado);
         return seleccionado;
     }
 
@@ -331,6 +328,7 @@ public class TableroAvanzado implements TableroJuego {
                 for (int indice = 0; indice <= limite - tamanoSalida; indice++) {
                     if (salidaOcupada(lado, indice, tamanoSalida)) continue;
 
+                    reglas.validarTamanoSalida(tamanoSalida);
                     Salida salida = new Salida(lado, indice, color, tamanoSalida);
                     candidatas.add(salida);
 
@@ -343,8 +341,7 @@ public class TableroAvanzado implements TableroJuego {
                 }
             }
 
-            if (candidatas.isEmpty())
-                throw new IllegalStateException("No hay salida disponible para " + color);
+            reglas.validarSalidaDisponible(!candidatas.isEmpty(), color);
 
             List<Salida> opciones = alineadas.isEmpty() ? candidatas : alineadas;
             Salida elegida = opciones.get(random.nextInt(opciones.size()));
@@ -431,18 +428,14 @@ public class TableroAvanzado implements TableroJuego {
     }
 
     private void validarTablero() {
-        for (int fila = 0; fila < numeroFilas; fila++)
-            for (int columna = 0; columna < numeroColumnas; columna++)
-                if (tablero[fila][columna] == 0)
-                    throw new IllegalStateException("El tablero contiene casillas vacías");
+        reglas.validarTableroCompleto(tablero);
 
         long cantidadColores = piezas.stream()
                 .map(Pieza::color)
                 .distinct()
                 .count();
 
-        if (cantidadColores < 3 || cantidadColores > 10)
-            throw new IllegalStateException("Cantidad de colores incorrecta");
+        reglas.validarCantidadColores(cantidadColores);
     }
 
     @Override

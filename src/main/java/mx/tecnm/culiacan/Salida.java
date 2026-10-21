@@ -5,10 +5,6 @@ public record Salida(LadoSalida ladoSalida, int indice, Ficha colorFicha, int ta
         this(ladoSalida, indice, colorFicha, 1);
     }
 
-    public Salida {
-        if (tamano < 1 || tamano > 2) throw new IllegalArgumentException("Tamano de salida incorrecto");
-    }
-
     public boolean ocupaPosicion(LadoSalida lado, int posicion) {
         return ladoSalida == lado
                 && posicion >= indice

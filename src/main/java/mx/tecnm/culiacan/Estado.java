@@ -9,7 +9,7 @@ public class Estado {
     private final int numeroColumnas;
     private final String clave;
 
-    public Estado(int[][] origen) {
+    public Estado(int[][] origen, Reglas reglas) {
         numeroFilas = origen.length;
         numeroColumnas = origen[0].length;
         celdas = new byte[numeroFilas * numeroColumnas];
@@ -18,7 +18,7 @@ public class Estado {
             for (int columna = 0; columna < numeroColumnas; columna++) {
                 int id = origen[fila][columna];
 
-                if (id < 0 || id > 255) throw new IllegalArgumentException("Identificador de pieza fuera de rango");
+                reglas.validarIdentificadorPieza(id);
 
                 celdas[indice(fila, columna)] = (byte) id;
             }

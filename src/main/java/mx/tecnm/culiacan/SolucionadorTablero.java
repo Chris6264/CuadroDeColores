@@ -2,7 +2,18 @@ package mx.tecnm.culiacan;
 
 import java.util.*;
 
+/**
+ * Resuelve un tablero con búsqueda A*.
+ * <p>
+ * Genera los sucesores de cada estado (mover una pieza o sacarla por una salida),
+ * usa como heurística la distancia de cada pieza a su mejor salida y se detiene
+ * al encontrar una solución, al agotar los estados o al superar los límites
+ * de nodos y de estados. Según el tamaño del tablero usa A* clásico o ponderado.
+ */
 public class SolucionadorTablero {
+    private static final int CASILLAS_A_ESTRELLA_PURO = 9;
+    private static final double PESO_PONDERADO = 1.5;
+
     private final List<Salida> salidas;
     private final List<Pieza> piezas;
     private final int numeroFilas;
@@ -29,9 +40,13 @@ public class SolucionadorTablero {
 
         int casillas = numeroFilas * numeroColumnas;
 
-        this.peso = casillas <= 25 ? 1.5 : 2.0;
+        this.peso = esPonderado(numeroFilas, numeroColumnas) ? PESO_PONDERADO : 1.0;
         this.maximoNodos = casillas <= 25 ? 100000 : casillas <= 49 ? 150000 : 300000;
         this.maximoEstados = casillas <= 25 ? 150000 : casillas <= 49 ? 200000 : 500000;
+    }
+
+    public static boolean esPonderado(int numeroFilas, int numeroColumnas) {
+        return numeroFilas * numeroColumnas > CASILLAS_A_ESTRELLA_PURO;
     }
 
     public int getNodosExplorados() { return nodosExplorados; }
@@ -116,22 +131,22 @@ public class SolucionadorTablero {
             int columna = origen[1];
 
             for (Movimiento movimiento : Movimiento.values()) {
-                int movimientoFila = movimiento.getMovimientoFila();
-                int movimientoColumna = movimiento.getMovimientoColumna();
+                int df = movimiento.getMovimientoFila();
+                int dc = movimiento.getMovimientoColumna();
 
                 boolean dentro = true;
                 boolean libre = true;
 
                 for (int parte = 0; parte < pieza.getTamano(); parte++) {
-                    int numeroFila = fila + pieza.getDesplazamientoFila(parte) + movimientoFila;
-                    int numeroColumna = columna + pieza.getDesplazamientoColumna(parte) + movimientoColumna;
+                    int nf = fila + pieza.getDesplazamientoFila(parte) + df;
+                    int nc = columna + pieza.getDesplazamientoColumna(parte) + dc;
 
-                    if (numeroFila < 0 || numeroColumna < 0 || numeroFila >= numeroFilas || numeroColumna >= numeroColumnas) {
+                    if (nf < 0 || nc < 0 || nf >= numeroFilas || nc >= numeroColumnas) {
                         dentro = false;
                         continue;
                     }
 
-                    int ocupante = estado.get(numeroFila, numeroColumna);
+                    int ocupante = estado.get(nf, nc);
 
                     if (ocupante != 0 && ocupante != pieza.id()) {
                         libre = false;
@@ -222,10 +237,10 @@ public class SolucionadorTablero {
                 int extremo;
 
                 for (int parte : cara) {
-                    int fila = origen[0] + pieza.getDesplazamientoFila(parte);
-                    int columna = origen[1] + pieza.getDesplazamientoColumna(parte);
+                    int f = origen[0] + pieza.getDesplazamientoFila(parte);
+                    int c = origen[1] + pieza.getDesplazamientoColumna(parte);
 
-                    int posicion = lado == LadoSalida.ARRIBA || lado == LadoSalida.ABAJO ? columna : fila;
+                    int posicion = lado == LadoSalida.ARRIBA || lado == LadoSalida.ABAJO ? c : f;
                     minimo = Math.min(minimo, posicion);
                 }
 

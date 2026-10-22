@@ -3,6 +3,9 @@ package mx.tecnm.culiacan;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Define las geometrías disponibles para las piezas.
+ */
 public enum Forma {
     INDIVIDUAL(new int[][]{{0, 0}}),
     HORIZONTAL(new int[][]{{0, 0}, {0, 1}}),
@@ -20,38 +23,82 @@ public enum Forma {
     private final int[][] posiciones;
     private final int[][] caras;
 
+    /**
+     * Inicializa los valores de Forma.
+     * @param posiciones Valor utilizado para inicializar la instancia.
+     */
     Forma(int[][] posiciones) {
         this.posiciones = posiciones;
         this.caras = new int[LadoSalida.values().length][];
         for (LadoSalida lado : LadoSalida.values()) caras[lado.ordinal()] = calcularIndicesCara(lado);
     }
 
+    /**
+     * Obtiene tamano.
+     * @return Resultado de get tamano.
+     */
     public int getTamano() { return posiciones.length; }
 
+    /**
+     * Obtiene fila.
+     * @param parte Parte utilizado en la operación.
+     * @return Resultado de get fila.
+     */
     public int getFila(int parte) { return posiciones[parte][0]; }
 
+    /**
+     * Obtiene columna.
+     * @param parte Parte utilizado en la operación.
+     * @return Resultado de get columna.
+     */
     public int getColumna(int parte) { return posiciones[parte][1]; }
 
+    /**
+     * Comprueba si lcorta.
+     * @return Resultado de es lcorta.
+     */
     public boolean esLCorta() {
         return this == L1 || this == L2 || this == L3 || this == L4;
     }
 
+    /**
+     * Comprueba si llarga.
+     * @return Resultado de es llarga.
+     */
     public boolean esLLarga() {
         return this == LARGA1 || this == LARGA2 || this == LARGA3 || this == LARGA4;
     }
 
+    /**
+     * Obtiene ls cortas.
+     * @return Resultado de get ls cortas.
+     */
     public static Forma[] getLsCortas() {
         return new Forma[]{L1, L2, L3, L4};
     }
 
+    /**
+     * Obtiene ls largas.
+     * @return Resultado de get ls largas.
+     */
     public static Forma[] getLsLargas() {
         return new Forma[]{LARGA1, LARGA2, LARGA3, LARGA4};
     }
 
+    /**
+     * Obtiene tamano salida.
+     * @param lado Lado utilizado en la operación.
+     * @return Resultado de get tamano salida.
+     */
     public int getTamanoSalida(LadoSalida lado) {
         return caras[lado.ordinal()].length;
     }
 
+    /**
+     * Calcula indices cara.
+     * @param lado Lado utilizado en la operación.
+     * @return Resultado de calcular indices cara.
+     */
     private int[] calcularIndicesCara(LadoSalida lado) {
         boolean minimo = lado == LadoSalida.ARRIBA || lado == LadoSalida.IZQUIERDA;
         boolean horizontal = lado == LadoSalida.ARRIBA || lado == LadoSalida.ABAJO;
@@ -76,10 +123,20 @@ public enum Forma {
         return indices.stream().mapToInt(Integer::intValue).toArray();
     }
 
+    /**
+     * Obtiene indices cara.
+     * @param lado Lado utilizado en la operación.
+     * @return Resultado de get indices cara.
+     */
     public int[] getIndicesCara(LadoSalida lado) {
         return caras[lado.ordinal()];
     }
 
+    /**
+     * Comprueba si salida.
+     * @param lado Lado utilizado en la operación.
+     * @return Resultado de permite salida.
+     */
     public boolean permiteSalida(LadoSalida lado) {
         if (this == HORIZONTAL)
             return lado == LadoSalida.IZQUIERDA || lado == LadoSalida.DERECHA;

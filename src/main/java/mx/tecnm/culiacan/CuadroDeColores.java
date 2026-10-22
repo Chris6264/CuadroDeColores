@@ -3,17 +3,29 @@ package mx.tecnm.culiacan;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Coordina la selección, generación, resolución y presentación de los tableros.
+ */
 public class CuadroDeColores {
     private final Version version;
     private final Reglas reglas;
     private final Vista vista;
 
+    /**
+     * Construye una instancia de CuadroDeColores con los parámetros indicados.
+     * @param version Version utilizado en la operación.
+     * @param reglas Reglas utilizado en la operación.
+     * @param vista Vista utilizado en la operación.
+     */
     public CuadroDeColores(Version version, Reglas reglas, Vista vista) {
         this.version = version;
         this.reglas = reglas;
         this.vista = vista;
     }
 
+    /**
+     * Inicia la operación correspondiente.
+     */
     public void iniciar() {
         int filas = 2;
         int columnas = 2;
@@ -78,8 +90,6 @@ public class CuadroDeColores {
 
         vista.mostrarTablero(tablero);
 
-        vista.mostrarAlgoritmoUsado(filas,columnas);
-
         vista.mostrarCantidadMovimientos(solucion.size());
 
         List<String> historialDeMovimientos = new ArrayList<>();
@@ -98,6 +108,12 @@ public class CuadroDeColores {
         vista.mostrarHistorialMovimientos(historialDeMovimientos);
     }
 
+    /**
+     * Crea tablero.
+     * @param filas Filas utilizado en la operación.
+     * @param columnas Columnas utilizado en la operación.
+     * @return Resultado de crear tablero.
+     */
     private TableroJuego crearTablero(int filas, int columnas){
         TableroJuego tablero;
         if (version == Version.BASICA)
@@ -109,6 +125,10 @@ public class CuadroDeColores {
         return tablero;
     }
 
+    /**
+     * Solicita dimension.
+     * @return Resultado de pedir dimension.
+     */
     private int pedirDimension() {
         while (true) {
             try {
@@ -121,6 +141,10 @@ public class CuadroDeColores {
         }
     }
 
+    /**
+     * Solicita filas.
+     * @return Resultado de pedir filas.
+     */
     private int pedirFilas() {
         while (true) {
             try {
@@ -133,6 +157,10 @@ public class CuadroDeColores {
         }
     }
 
+    /**
+     * Solicita columnas.
+     * @return Resultado de pedir columnas.
+     */
     private int pedirColumnas() {
         while (true) {
             try {

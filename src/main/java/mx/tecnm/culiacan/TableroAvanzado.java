@@ -2,6 +2,9 @@ package mx.tecnm.culiacan;
 
 import java.util.*;
 
+/**
+ * Genera y administra tableros con piezas de formas y tamaños avanzados.
+ */
 public class TableroAvanzado implements TableroJuego {
     private final Reglas reglas;
     private final int numeroFilas;
@@ -9,10 +12,20 @@ public class TableroAvanzado implements TableroJuego {
     private final int[][] tablero;
     private final List<Pieza> piezas = new ArrayList<>();
     private final List<Salida> salidas = new ArrayList<>();
+    /**
+     * Implementa la operación random.
+     * @return Resultado de random.
+     */
     private final Random random = new Random();
     private final Estado estadoInicial;
     private Estado estadoActual;
 
+    /**
+     * Construye una instancia de TableroAvanzado con los parámetros indicados.
+     * @param numeroFilas Numero filas utilizado en la operación.
+     * @param numeroColumnas Numero columnas utilizado en la operación.
+     * @param reglas Reglas utilizado en la operación.
+     */
     public TableroAvanzado(int numeroFilas, int numeroColumnas, Reglas reglas) {
         reglas.validarCampos(numeroFilas);
         reglas.validarCampos(numeroColumnas);
@@ -47,25 +60,52 @@ public class TableroAvanzado implements TableroJuego {
     }
 
     @Override
+    /**
+     * Obtiene numero filas.
+     * @return Resultado de get numero filas.
+     */
     public int getNumeroFilas() { return numeroFilas; }
 
     @Override
+    /**
+     * Obtiene numero columnas.
+     * @return Resultado de get numero columnas.
+     */
     public int getNumeroColumnas() { return numeroColumnas; }
 
     @Override
+    /**
+     * Obtiene salidas.
+     * @return Resultado de get salidas.
+     */
     public List<Salida> getSalidas() { return salidas; }
 
     @Override
+    /**
+     * Obtiene piezas.
+     * @return Resultado de get piezas.
+     */
     public List<Pieza> getPiezas() { return piezas; }
 
     @Override
+    /**
+     * Obtiene estado inicial.
+     * @return Resultado de get estado inicial.
+     */
     public Estado getEstadoInicial() { return estadoInicial; }
 
     @Override
+    /**
+     * Realiza movimiento.
+     * @param paso Paso utilizado en la operación.
+     */
     public void realizarMovimiento(Paso paso) {
         estadoActual = estadoActual.realizarMovimiento(paso);
     }
 
+    /**
+     * Implementa la operación llenar tablero.
+     */
     private void llenarTablero() {
         List<Forma> formas = new ArrayList<>();
 
@@ -123,10 +163,22 @@ public class TableroAvanzado implements TableroJuego {
         validarTablero();
     }
 
+    /**
+     * Implementa la operación elegir aleatoria.
+     * @param opciones Opciones utilizado en la operación.
+     * @return Resultado de elegir aleatoria.
+     */
     private Forma elegirAleatoria(Forma[] opciones) {
         return opciones[random.nextInt(opciones.length)];
     }
 
+    /**
+     * Comprueba si colocar.
+     * @param fila Fila utilizado en la operación.
+     * @param columna Columna utilizado en la operación.
+     * @param forma Forma utilizado en la operación.
+     * @return Resultado de puede colocar.
+     */
     private boolean puedeColocar(int fila, int columna, Forma forma) {
         for (int parte = 0; parte < forma.getTamano(); parte++) {
             int nf = fila + forma.getFila(parte);
@@ -141,6 +193,13 @@ public class TableroAvanzado implements TableroJuego {
         return true;
     }
 
+    /**
+     * Coloca forma en.
+     * @param fila Fila utilizado en la operación.
+     * @param columna Columna utilizado en la operación.
+     * @param forma Forma utilizado en la operación.
+     * @param formas Formas utilizado en la operación.
+     */
     private void colocarFormaEn(int fila, int columna, Forma forma, List<Forma> formas) {
         reglas.validarEspacioParaPieza(puedeColocar(fila, columna, forma));
 
@@ -155,6 +214,11 @@ public class TableroAvanzado implements TableroJuego {
         formas.add(forma);
     }
 
+    /**
+     * Coloca forma aleatoria.
+     * @param forma Forma utilizado en la operación.
+     * @param formas Formas utilizado en la operación.
+     */
     private void colocarFormaAleatoria(Forma forma, List<Forma> formas) {
         List<int[]> disponibles = new ArrayList<>();
 
@@ -170,6 +234,11 @@ public class TableroAvanzado implements TableroJuego {
         colocarFormaEn(posicion[0], posicion[1], forma, formas);
     }
 
+    /**
+     * Implementa la operación grupo.
+     * @param forma Forma utilizado en la operación.
+     * @return Resultado de grupo.
+     */
     private int grupo(Forma forma) {
         if (forma == Forma.INDIVIDUAL) return 0;
         if (forma == Forma.HORIZONTAL) return 1;
@@ -179,6 +248,10 @@ public class TableroAvanzado implements TableroJuego {
         return 4;
     }
 
+    /**
+     * Asigna colores.
+     * @param formas Formas utilizado en la operación.
+     */
     private void asignarColores(List<Forma> formas) {
         List<Ficha> colores = new ArrayList<>();
 
@@ -263,6 +336,13 @@ public class TableroAvanzado implements TableroJuego {
         }
     }
 
+    /**
+     * Obtiene seleccionado.
+     * @param cantidad Cantidad utilizado en la operación.
+     * @param asignados Asignados utilizado en la operación.
+     * @param vecinos Vecinos utilizado en la operación.
+     * @return Resultado de get seleccionado.
+     */
     private int getSeleccionado(int cantidad, int[] asignados, List<Set<Integer>> vecinos) {
         int seleccionado = -1;
         int mayorSaturacion = -1;
@@ -292,6 +372,9 @@ public class TableroAvanzado implements TableroJuego {
         return seleccionado;
     }
 
+    /**
+     * Coloca salidas.
+     */
     private void colocarSalidas() {
         salidas.clear();
 
@@ -353,6 +436,12 @@ public class TableroAvanzado implements TableroJuego {
         }
     }
 
+    /**
+     * Comprueba si alineada.
+     * @param pieza Pieza utilizado en la operación.
+     * @param salida Salida utilizado en la operación.
+     * @return Resultado de esta alineada.
+     */
     private boolean estaAlineada(Pieza pieza, Salida salida) {
         if (!pieza.permiteSalida(salida.ladoSalida())) return false;
 
@@ -397,6 +486,11 @@ public class TableroAvanzado implements TableroJuego {
         return true;
     }
 
+    /**
+     * Busca origen.
+     * @param id Id utilizado en la operación.
+     * @return Resultado de buscar origen.
+     */
     private int[] buscarOrigen(int id) {
         int minimoFila = Integer.MAX_VALUE;
         int minimoColumna = Integer.MAX_VALUE;
@@ -415,6 +509,13 @@ public class TableroAvanzado implements TableroJuego {
         return new int[]{minimoFila, minimoColumna};
     }
 
+    /**
+     * Implementa la operación salida ocupada.
+     * @param lado Lado utilizado en la operación.
+     * @param indice Indice utilizado en la operación.
+     * @param tamano Tamano utilizado en la operación.
+     * @return Resultado de salida ocupada.
+     */
     private boolean salidaOcupada(LadoSalida lado, int indice, int tamano) {
         for (Salida salida : salidas) {
             if (salida.ladoSalida() != lado) continue;
@@ -427,6 +528,9 @@ public class TableroAvanzado implements TableroJuego {
         return false;
     }
 
+    /**
+     * Valida tablero.
+     */
     private void validarTablero() {
         reglas.validarTableroCompleto(tablero);
 
@@ -439,6 +543,10 @@ public class TableroAvanzado implements TableroJuego {
     }
 
     @Override
+    /**
+     * Devuelve la representación textual del objeto.
+     * @return Resultado de to string.
+     */
     public String toString() {
         return new ImpresorTablero(estadoActual, piezas, salidas).toString();
     }

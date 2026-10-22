@@ -1,5 +1,8 @@
 package mx.tecnm.culiacan;
 
+/**
+ * Define los identificadores o colores de las fichas del juego.
+ */
 public enum Ficha {
     ROJA('R', "\u001B[41m"),
     NEGRA('N', "\u001B[40m"),
@@ -16,12 +19,25 @@ public enum Ficha {
     private final char simbolo;
     private final String colorANSI;
 
+    /**
+     * Inicializa los valores de Ficha.
+     * @param simbolo Valor utilizado para inicializar la instancia.
+     * @param colorANSI Valor utilizado para inicializar la instancia.
+     */
     Ficha(char simbolo, String colorANSI) {
         this.simbolo = simbolo;
         this.colorANSI = colorANSI;
     }
 
+    /**
+     * Obtiene simbolo.
+     * @return Resultado de get simbolo.
+     */
     public char getSimbolo() { return simbolo; }
 
+    /**
+     * Obtiene color ansi.
+     * @return Resultado de get color ansi.
+     */
     public String getColorANSI() { return colorANSI; }
 }

@@ -3,6 +3,9 @@ package mx.tecnm.culiacan;
 import java.util.*;
 import java.util.stream.Collectors;
 
+/**
+ * Gestiona la generación y disposición de piezas en el tablero.
+ */
 public class Tablero implements TableroJuego{
     private final Reglas reglas;
     private final int[][] tablero;
@@ -11,12 +14,25 @@ public class Tablero implements TableroJuego{
     private final int numeroDeLados;
     private final List<Salida> salidas = new ArrayList<>();
     private final List<Pieza> piezas = new ArrayList<>();
+    /**
+     * Implementa la operación random.
+     * @return Resultado de random.
+     */
     private final Random random = new Random();
 
+    /**
+     * Construye una instancia de Tablero con los parámetros indicados.
+     * @param reglas Reglas utilizado en la operación.
+     */
     public Tablero(Reglas reglas) {
         this(2, reglas);
     }
 
+    /**
+     * Construye una instancia de Tablero con los parámetros indicados.
+     * @param numeroDeLados Numero de lados utilizado en la operación.
+     * @param reglas Reglas utilizado en la operación.
+     */
     public Tablero(int numeroDeLados, Reglas reglas) {
         reglas.validarCampos(numeroDeLados);
         this.reglas = reglas;
@@ -30,36 +46,66 @@ public class Tablero implements TableroJuego{
     }
 
     @Override
+    /**
+     * Obtiene numero filas.
+     * @return Resultado de get numero filas.
+     */
     public int getNumeroFilas() { return numeroDeLados; }
 
     @Override
+    /**
+     * Obtiene numero columnas.
+     * @return Resultado de get numero columnas.
+     */
     public int getNumeroColumnas() { return numeroDeLados; }
 
+    /**
+     * Obtiene salidas.
+     * @return Resultado de get salidas.
+     */
     public List<Salida> getSalidas() { return salidas; }
 
+    /**
+     * Obtiene piezas.
+     * @return Resultado de get piezas.
+     */
     public List<Pieza> getPiezas() { return piezas; }
 
+    /**
+     * Obtiene estado inicial.
+     * @return Resultado de get estado inicial.
+     */
     public Estado getEstadoInicial() { return estadoInicial; }
 
+    /**
+     * Realiza movimiento.
+     * @param paso Paso utilizado en la operación.
+     */
     public void realizarMovimiento(Paso paso) {
         estadoActual = estadoActual.realizarMovimiento(paso);
     }
 
+    /**
+     * Implementa la operación llenar tablero.
+     */
     private void llenarTablero() {
         if (numeroDeLados == 2) llenarBasico();
         else llenarIntermedio();
     }
 
+    /**
+     * Implementa la operación llenar basico.
+     */
     private void llenarBasico() {
         List<Ficha> colores = obtenerColores();
         Collections.shuffle(colores, random);
 
         List<Ficha> fichas = new ArrayList<>();
 
-        fichas.add(colores.get(0));
-        fichas.add(colores.get(0));
-        fichas.add(colores.get(1));
-        fichas.add(colores.get(1));
+        int cantidadPrimerColor = random.nextBoolean() ? 2 : 3;
+
+        for (int indice = 0; indice < 4; indice++)
+            fichas.add(indice < cantidadPrimerColor ? colores.get(0) : colores.get(1));
 
         Collections.shuffle(fichas, random);
 
@@ -76,6 +122,9 @@ public class Tablero implements TableroJuego{
         colocarSalidasBasicas();
     }
 
+    /**
+     * Implementa la operación llenar intermedio.
+     */
     private void llenarIntermedio() {
         List<Orientacion> orientaciones = new ArrayList<>();
         int id = 1;
@@ -135,12 +184,20 @@ public class Tablero implements TableroJuego{
         validarTablero();
     }
 
+    /**
+     * Obtiene colores.
+     * @return Resultado de obtener colores.
+     */
     private List<Ficha> obtenerColores() {
         return Arrays.stream(Ficha.values())
                 .filter(ficha -> ficha != Ficha.VACIA)
                 .collect(Collectors.toList());
     }
 
+    /**
+     * Asigna colores.
+     * @param orientaciones Orientaciones utilizado en la operación.
+     */
     private void asignarColores(List<Orientacion> orientaciones) {
         List<Ficha> colores = obtenerColores();
         Collections.shuffle(colores, random);
@@ -189,6 +246,9 @@ public class Tablero implements TableroJuego{
         }
     }
 
+    /**
+     * Coloca salidas basicas.
+     */
     private void colocarSalidasBasicas() {
         salidas.clear();
 
@@ -243,6 +303,9 @@ public class Tablero implements TableroJuego{
         }
     }
 
+    /**
+     * Coloca salidas intermedias.
+     */
     private void colocarSalidasIntermedias() {
         salidas.clear();
 
@@ -296,6 +359,12 @@ public class Tablero implements TableroJuego{
         }
     }
 
+    /**
+     * Implementa la operación lado compatible.
+     * @param orientacion Orientacion utilizado en la operación.
+     * @param lado Lado utilizado en la operación.
+     * @return Resultado de lado compatible.
+     */
     private boolean ladoCompatible(Orientacion orientacion, LadoSalida lado) {
         if (orientacion == Orientacion.INDIVIDUAL) return true;
 
@@ -305,6 +374,10 @@ public class Tablero implements TableroJuego{
         return lado == LadoSalida.ARRIBA || lado == LadoSalida.ABAJO;
     }
 
+    /**
+     * Obtiene espacios salida.
+     * @return Resultado de obtener espacios salida.
+     */
     private List<int[]> obtenerEspaciosSalida() {
         List<int[]> espacios = new ArrayList<>();
 
@@ -315,6 +388,9 @@ public class Tablero implements TableroJuego{
         return espacios;
     }
 
+    /**
+     * Valida tablero.
+     */
     private void validarTablero() {
         reglas.validarTableroCompleto(tablero);
 
@@ -327,6 +403,10 @@ public class Tablero implements TableroJuego{
     }
 
     @Override
+    /**
+     * Devuelve la representación textual del objeto.
+     * @return Resultado de to string.
+     */
     public String toString() {
         return new ImpresorTablero(estadoActual, piezas, salidas).toString();
     }

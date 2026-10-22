@@ -11,7 +11,7 @@ import java.util.*;
  * de nodos y de estados. Según el tamaño del tablero usa A* clásico o ponderado.
  */
 public class SolucionadorTablero {
-    private static final int CASILLAS_A_ESTRELLA_PURO = 9;
+    private static final int CASILLAS_A_ESTRELLA_PURO = 16;
     private static final double PESO_PONDERADO = 1.5;
 
     private final List<Salida> salidas;
@@ -27,10 +27,25 @@ public class SolucionadorTablero {
     private int nodosGenerados;
     private ResultadoBusqueda resultadoBusqueda;
 
+    /**
+     * Construye una instancia de SolucionadorTablero con los parámetros indicados.
+     * @param salidas Salidas utilizado en la operación.
+     * @param numeroDeLados Numero de lados utilizado en la operación.
+     * @param piezas Piezas utilizado en la operación.
+     * @param reglas Reglas utilizado en la operación.
+     */
     public SolucionadorTablero(List<Salida> salidas, int numeroDeLados, List<Pieza> piezas, Reglas reglas) {
         this(salidas, numeroDeLados, numeroDeLados, piezas, reglas);
     }
 
+    /**
+     * Construye una instancia de SolucionadorTablero con los parámetros indicados.
+     * @param salidas Salidas utilizado en la operación.
+     * @param numeroFilas Numero filas utilizado en la operación.
+     * @param numeroColumnas Numero columnas utilizado en la operación.
+     * @param piezas Piezas utilizado en la operación.
+     * @param reglas Reglas utilizado en la operación.
+     */
     public SolucionadorTablero(List<Salida> salidas, int numeroFilas, int numeroColumnas, List<Pieza> piezas, Reglas reglas) {
         this.reglas = reglas;
         this.salidas = salidas;
@@ -41,20 +56,43 @@ public class SolucionadorTablero {
         int casillas = numeroFilas * numeroColumnas;
 
         this.peso = esPonderado(numeroFilas, numeroColumnas) ? PESO_PONDERADO : 1.0;
-        this.maximoNodos = casillas <= 25 ? 100000 : casillas <= 49 ? 150000 : 300000;
-        this.maximoEstados = casillas <= 25 ? 150000 : casillas <= 49 ? 200000 : 500000;
+        this.maximoNodos = casillas <= 25 ? 300000 : casillas <= 49 ? 150000 : 300000;
+        this.maximoEstados = casillas <= 25 ? 500000 : casillas <= 49 ? 200000 : 500000;
     }
 
+    /**
+     * Comprueba si ponderado.
+     * @param numeroFilas Numero filas utilizado en la operación.
+     * @param numeroColumnas Numero columnas utilizado en la operación.
+     * @return Resultado de es ponderado.
+     */
     public static boolean esPonderado(int numeroFilas, int numeroColumnas) {
         return numeroFilas * numeroColumnas > CASILLAS_A_ESTRELLA_PURO;
     }
 
+    /**
+     * Obtiene nodos explorados.
+     * @return Resultado de get nodos explorados.
+     */
     public int getNodosExplorados() { return nodosExplorados; }
 
+    /**
+     * Obtiene nodos generados.
+     * @return Resultado de get nodos generados.
+     */
     public int getNodosGenerados() { return nodosGenerados; }
 
+    /**
+     * Obtiene resultado busqueda.
+     * @return Resultado de get resultado busqueda.
+     */
     public ResultadoBusqueda getResultadoBusqueda() { return resultadoBusqueda; }
 
+    /**
+     * Resuelve tablero.
+     * @param inicial Inicial utilizado en la operación.
+     * @return Resultado de resolver tablero.
+     */
     public List<Paso> resolverTablero(Estado inicial) {
         PriorityQueue<Nodo> abiertos = new PriorityQueue<>(
                 Comparator.comparingDouble(Nodo::getCostoTotal)
@@ -120,6 +158,11 @@ public class SolucionadorTablero {
         return null;
     }
 
+    /**
+     * Genera los sucesores del estado.
+     * @param estado Estado utilizado en la operación.
+     * @return Resultado de sucesores.
+     */
     private List<Paso> sucesores(Estado estado) {
         List<Paso> pasos = new ArrayList<>();
 
@@ -166,6 +209,14 @@ public class SolucionadorTablero {
         return pasos;
     }
 
+    /**
+     * Comprueba si salir completa.
+     * @param pieza Pieza utilizado en la operación.
+     * @param movimiento Movimiento utilizado en la operación.
+     * @param fila Fila utilizado en la operación.
+     * @param columna Columna utilizado en la operación.
+     * @return Resultado de puede salir completa.
+     */
     private boolean puedeSalirCompleta(Pieza pieza, Movimiento movimiento, int fila, int columna) {
         LadoSalida lado = movimiento.getLadoSalida();
 
@@ -215,6 +266,11 @@ public class SolucionadorTablero {
         return false;
     }
 
+    /**
+     * Calcula la estimación heurística del estado.
+     * @param estado Estado utilizado en la operación.
+     * @return Resultado de heuristica.
+     */
     private int heuristica(Estado estado) {
         int total = 0;
 

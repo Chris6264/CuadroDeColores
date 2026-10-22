@@ -10,6 +10,9 @@ import java.io.*;
 import java.util.*;
 
 
+/**
+ * Proporciona operaciones de lectura de datos de entrada.
+ */
 public class Keyboard 
 {
     //*************  Error Handling Section  **************************
@@ -20,6 +23,10 @@ public class Keyboard
     //-----------------------------------------------------------------
     //  Returns the current error count.
     //-----------------------------------------------------------------
+    /**
+     * Obtiene error count.
+     * @return Resultado de get error count.
+     */
     public static int getErrorCount() {
         return errorCount;
     }
@@ -27,6 +34,10 @@ public class Keyboard
     //-----------------------------------------------------------------
     //  Resets the current error count to zero.
     //-----------------------------------------------------------------
+    /**
+     * Implementa la operación reset error count.
+     * @param count Count utilizado en la operación.
+     */
     public static void resetErrorCount(int count) {
         errorCount = 0;
     }
@@ -35,6 +46,10 @@ public class Keyboard
     //  Returns a boolean indicating whether input errors are
     //  currently printed to standard output.
     //-----------------------------------------------------------------
+    /**
+     * Obtiene print errors.
+     * @return Resultado de get print errors.
+     */
     public static boolean getPrintErrors() {
         return printErrors;
     }
@@ -43,6 +58,10 @@ public class Keyboard
     //  Sets a boolean indicating whether input errors are to be
     //  printed to standard output.
     //-----------------------------------------------------------------
+    /**
+     * Establece print errors.
+     * @param flag Flag utilizado en la operación.
+     */
     public static void setPrintErrors(boolean flag) {
         printErrors = flag;
     }
@@ -71,6 +90,10 @@ public class Keyboard
     //  Gets the next input token assuming it may be on subsequent
     //  input lines.
     //-----------------------------------------------------------------
+    /**
+     * Obtiene next token.
+     * @return Resultado de get next token.
+     */
     private static String getNextToken() {
         return getNextToken(true);
     }
@@ -129,6 +152,10 @@ public class Keyboard
     //  Returns true if there are no more tokens to read on the
     //  current input line.
     //-----------------------------------------------------------------
+    /**
+     * Implementa la operación end of line.
+     * @return Resultado de end of line.
+     */
     public static boolean endOfLine() {
         return !reader.hasMoreTokens();
     }
@@ -182,6 +209,10 @@ public class Keyboard
     //  Returns the next complete line read from standard input,
     //  even if it is empty.
     //-----------------------------------------------------------------
+    /**
+     * Implementa la operación read line.
+     * @return Resultado de read line.
+     */
     public static String readLine() {
         try {
             reader = null;

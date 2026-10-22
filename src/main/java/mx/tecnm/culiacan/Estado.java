@@ -3,12 +3,20 @@ package mx.tecnm.culiacan;
 
 import java.nio.charset.StandardCharsets;
 
+/**
+ * Representa una configuración del tablero durante la búsqueda.
+ */
 public class Estado {
     private final byte[] celdas;
     private final int numeroFilas;
     private final int numeroColumnas;
     private final String clave;
 
+    /**
+     * Construye una instancia de Estado con los parámetros indicados.
+     * @param origen Origen utilizado en la operación.
+     * @param reglas Reglas utilizado en la operación.
+     */
     public Estado(int[][] origen, Reglas reglas) {
         numeroFilas = origen.length;
         numeroColumnas = origen[0].length;
@@ -27,6 +35,12 @@ public class Estado {
         clave = new String(celdas, StandardCharsets.ISO_8859_1);
     }
 
+    /**
+     * Construye una instancia de Estado con los parámetros indicados.
+     * @param celdas Celdas utilizado en la operación.
+     * @param numeroFilas Numero filas utilizado en la operación.
+     * @param numeroColumnas Numero columnas utilizado en la operación.
+     */
     private Estado(byte[] celdas, int numeroFilas, int numeroColumnas) {
         this.celdas = celdas;
         this.numeroFilas = numeroFilas;
@@ -34,20 +48,48 @@ public class Estado {
         this.clave = new String(celdas, StandardCharsets.ISO_8859_1);
     }
 
+    /**
+     * Implementa la operación indice.
+     * @param fila Fila utilizado en la operación.
+     * @param columna Columna utilizado en la operación.
+     * @return Resultado de indice.
+     */
     private int indice(int fila, int columna) {
         return fila * numeroColumnas + columna;
     }
 
+    /**
+     * Obtiene numero filas.
+     * @return Resultado de get numero filas.
+     */
     public int getNumeroFilas() { return numeroFilas; }
 
+    /**
+     * Obtiene numero columnas.
+     * @return Resultado de get numero columnas.
+     */
     public int getNumeroColumnas() { return numeroColumnas; }
 
+    /**
+     * Obtiene la operación correspondiente.
+     * @param fila Fila utilizado en la operación.
+     * @param columna Columna utilizado en la operación.
+     * @return Resultado de get.
+     */
     public int get(int fila, int columna) {
         return Byte.toUnsignedInt(celdas[indice(fila, columna)]);
     }
 
+    /**
+     * Obtiene clave.
+     * @return Resultado de get clave.
+     */
     public String getClave() { return clave; }
 
+    /**
+     * Comprueba si resuelto.
+     * @return Resultado de esta resuelto.
+     */
     public boolean estaResuelto() {
         boolean resuelto = true;
         for (byte celda : celdas)
@@ -58,6 +100,11 @@ public class Estado {
         return resuelto;
     }
 
+    /**
+     * Busca origen.
+     * @param id Id utilizado en la operación.
+     * @return Resultado de buscar origen.
+     */
     public int[] buscarOrigen(int id) {
         int minimoFila = Integer.MAX_VALUE;
         int minimoColumna = Integer.MAX_VALUE;
@@ -76,6 +123,10 @@ public class Estado {
         return new int[]{minimoFila, minimoColumna};
     }
 
+    /**
+     * Realiza movimiento.
+     * @param paso Paso utilizado en la operación.
+     */
     public Estado realizarMovimiento(Paso paso) {
         byte[] copia = celdas.clone();
 
